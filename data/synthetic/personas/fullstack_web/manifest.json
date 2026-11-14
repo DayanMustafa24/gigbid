@@ -1,0 +1,17 @@
+{
+  "persona": "fullstack_web",
+  "seed": 20261114,
+  "synthetic": true,
+  "case_studies": 16,
+  "repos": 16,
+  "reviews": 13,
+  "proposals": 150,
+  "evidence_items": 227,
+  "cv_pdf": true,
+  "outcomes": {
+    "ignored": 92,
+    "replied": 45,
+    "won": 13
+  },
+  "fabricated_claim_proposals": 6
+}

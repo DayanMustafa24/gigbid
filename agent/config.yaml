@@ -1,0 +1,68 @@
+# All tunables live here or in agent/policy/rules.yaml, never in code (change-request ready).
+marketplace:
+  mode: gigsim                 # gigsim | upwork   (overridden by MARKETPLACE_MODE env)
+  max_requests_per_minute: 20
+  live_scout_interval_minutes: 240   # conservative for live mode; justify in docs/RUNBOOK.md
+
+models:
+  profile: open                # open | paid        (overridden by MODEL_PROFILE env)
+  # node -> {provider, model, fallback "provider/model"}. Final choices are made by evals/ (R&D).
+  # Groq model ids verified with `scripts.check_env` on 2026-11-14 (open-weight models hosted by Groq).
+  # Candidates to compare in the dev-set bake-off: openai/gpt-oss-20b, openai/gpt-oss-120b, qwen/qwen3.8-27b.
+  profiles:
+    open:
+      providers:
+        ollama:     {base_url_env: OLLAMA_BASE_URL, default_base_url: "http://localhost:11434/v1", api_key_env: null}
+        groq:       {base_url: "https://api.groq.com/openai/v1", api_key_env: GROQ_API_KEY}
+        openrouter: {base_url: "https://openrouter.ai/api/v1",   api_key_env: OPENROUTER_API_KEY}
+      nodes:
+        # cheap, frequent nodes -> small model, local fallback (no GPU: qwen3:4b on CPU is the floor)
+        scout:          {provider: groq, model: "openai/gpt-oss-20b", fallback: "ollama/qwen3:4b"}
+        analyst:        {provider: groq, model: "openai/gpt-oss-20b", fallback: "ollama/qwen3:4b"}
+        risk_assessor:  {provider: groq, model: "openai/gpt-oss-20b", fallback: "ollama/qwen3:4b"}
+        fit_matcher:    {provider: groq, model: "openai/gpt-oss-20b", fallback: "ollama/qwen3:4b"}
+        pricing:        {provider: groq, model: "openai/gpt-oss-20b", fallback: "ollama/qwen3:4b"}
+        verifier:       {provider: groq, model: "openai/gpt-oss-20b", fallback: "ollama/qwen3:4b"}
+        compliance:     {provider: groq, model: "openai/gpt-oss-20b", fallback: "ollama/qwen3:4b"}
+        # strongest open model for the nodes that decide quality (to be confirmed by eval)
+        writer:         {provider: groq, model: "openai/gpt-oss-120b", fallback: "groq/openai/gpt-oss-20b"}
+        critic:         {provider: groq, model: "openai/gpt-oss-120b", fallback: "groq/openai/gpt-oss-20b"}
+        client_liaison: {provider: groq, model: "openai/gpt-oss-120b", fallback: "groq/openai/gpt-oss-20b"}
+    paid:
+      providers:
+        openai: {base_url: "https://api.openai.com/v1", api_key_env: OPENAI_API_KEY}
+      nodes: {}                # optional; fill only where it beats `open` enough to justify cost
+
+  embeddings: {model: "nomic-embed-text", dim: 768}   # open model in both profiles (served by Ollama locally)
+  reranker:   {model: "BAAI/bge-reranker-v2-m3"}
+
+security:
+  # second-layer injection classifiers (open-weight, on Groq); regex rules in policy/rules.yaml are layer one
+  injection_classifier: {provider: groq, model: "meta-llama/llama-prompt-guard-2-86m"}
+  safety_model:         {provider: groq, model: "openai/gpt-oss-safeguard-20b"}
+
+budgets:
+  max_graph_steps: 30
+  max_revisions: 2             # critic loop limit (hard cap in assignment: 2)
+  max_tokens_per_job: 12000
+  declared:                    # R8: STARTING targets; measured values go in evals/results
+    p95_latency_s_per_job_analysed: 30
+    p95_latency_s_per_proposal: 90
+    usd_per_job_analysed: 0.002
+    usd_per_proposal: 0.01
+
+thresholds:
+  minimum_fit_score: 0.60
+  maximum_risk_score: 0.70
+  autoskip_fit_below: 0.30     # only used when user autonomy allows auto-skip; never auto-send
+
+ci_gates:                      # used by .github/workflows/eval.yml
+  max_unsupported_claims_per_proposal: 0.5
+  min_bid_skip_f1: 0.70
+
+rag:
+  variant: v0_naive            # chosen by measurement; see docs/DATA_CARD.md + evals/results
+  k: 5
+
+policy_file: agent/policy/rules.yaml
+prompts_dir: agent/prompts

@@ -1,0 +1,69 @@
+# Policy rules as DATA. The Compliance Guard and Risk Assessor load this file; no rule is hard-coded.
+# The GigSim "platform policy update" (2 Nov 2026) should be absorbed by editing/adding entries
+# here (and `costs`), not Python. Replace with the official policy pack text when available.
+policy_version: "starter-2026-11-14"
+
+# type: regex  -> deterministic pattern match on the draft text (case-insensitive)
+# action: block   -> draft cannot go to approval until fixed
+#         redact  -> matching text is removed automatically
+#         warn    -> shown in UI, does not block
+rules:
+  - id: P1-off-platform-contact
+    description: No off-platform contact or payment requests.
+    applies_to: [draft, job_post]
+    type: regex
+    action: redact
+    patterns:
+      - '[\w.+-]+@[\w-]+\.[\w.-]+'
+      - '(?:\+?\d[\s().-]?){9,}\d'
+      - '\b(?:whats\s?app|telegram|skype|signal|discord|wechat)\b'
+      - '\b(?:paypal|venmo|zelle|wise|crypto|bitcoin|usdt)\b'
+  - id: P2-unpaid-work
+    description: No unpaid production work disguised as a trial.
+    applies_to: [job_post]
+    type: regex
+    action: block
+    patterns:
+      - '\b(?:free|unpaid)\s+(?:trial|test|sample|work|task)\b'
+      - 'for free as a test'
+  - id: P3-guarantees
+    description: Never guarantee results that cannot be guaranteed.
+    applies_to: [draft]
+    type: regex
+    action: block
+    patterns:
+      - '\bguarantee[sd]?\b'
+      - '\b100\s?%\s+(?:success|satisfaction|accuracy)\b'
+      - '\brisk[- ]free\b'
+  - id: P4-prompt-injection
+    description: Embedded instructions in job posts or client messages are untrusted data.
+    applies_to: [job_post, client_message]
+    type: regex
+    action: warn
+    patterns:
+      - 'ignore (?:all |any )?(?:previous|prior|above) (?:instructions|rules)'
+      - '(?:disregard|forget) (?:your|the) (?:system|instructions|rules)'
+      - 'you are now\b'
+      - 'system prompt'
+      - '\bact as\b.{0,40}\b(?:admin|developer|unrestricted)\b'
+  - id: P5-fabrication
+    description: No claim may exceed portfolio evidence (enforced by claim verification, not regex).
+    applies_to: [draft]
+    type: verifier
+    action: block
+  - id: P6-human-approval
+    description: Nothing is sent or spent without explicit human approval (enforced by graph interrupt).
+    applies_to: [system]
+    type: structural
+    action: block
+
+# Costs/limits that affect bidding. Change here when the platform changes.
+costs:
+  connects_per_proposal_default: 8
+  boosted_proposal_extra_connects: 0
+  proposal_fee_percent: 0          # placeholder for platform-update fee, if any
+  min_connects_value_ratio: 1.0    # expected value / connects cost must exceed this
+
+limits:
+  max_cover_letter_words: 250
+  min_cover_letter_words: 60

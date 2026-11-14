@@ -1,0 +1,17 @@
+{
+  "persona": "data_analyst",
+  "seed": 20261114,
+  "synthetic": true,
+  "case_studies": 16,
+  "repos": 16,
+  "reviews": 11,
+  "proposals": 150,
+  "evidence_items": 225,
+  "cv_pdf": true,
+  "outcomes": {
+    "ignored": 102,
+    "replied": 34,
+    "won": 14
+  },
+  "fabricated_claim_proposals": 14
+}

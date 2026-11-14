@@ -1,0 +1,264 @@
+=====================================================================
+GIGBID  -  MASTER PLAN  (stable document; change only when a decision changes)
+=====================================================================
+Companion file: GIGBID_STATE.txt  (volatile: done / remaining / next step / user tasks)
+READ BOTH FILES FIRST if you are a new LLM session. Then read Assignment-GigBid.docx
+summary in section 1 below (you do not need the docx itself unless a detail is unclear).
+
+Ambition: this is NOT just an assignment. It is a product the owner will use for real
+freelancing (Upwork live mode) and show to employers/clients. Every choice below is
+judged on (1) assignment compliance, (2) real-world usefulness afterwards.
+Anything extra that violates the assignment's layout/rules is marked [SIDEWAY] so the
+owner can discard it for submission.
+
+---------------------------------------------------------------------
+1. WHAT THE ASSIGNMENT REQUIRES (condensed, authoritative = the docx)
+---------------------------------------------------------------------
+Product: multi-agent freelancer copilot. Agents scout jobs, analyse, assess risk, match
+fit to portfolio evidence, price, write grounded proposals, critique, enforce compliance,
+and handle client conversations. A human approves EVERYTHING that leaves the system.
+
+Marks (100): A MCP tool layer 20 | B Advanced RAG 20 | C LangGraph multi-agent 25 |
+D Web UI 15 | E Production engineering 10 | Portfolio+R&D report 10.
+Viva multiplier 0..1.0 -> owner MUST understand the system (see docs/VIVA_PREP.md [SIDEWAY-ok]).
+
+Non-negotiables R1..R10:
+ R1 one marketplace port, two adapters (GigSim, live Upwork), switched by config
+ R2 own MCP servers: Portfolio(read), Marketplace(read+write), Workspace(calendar/email
+    drafts) + official Upwork MCP + one 3rd-party MCP (GitHub)
+ R3 hand-written StateGraph; Job Analyst / Risk / Fit run in PARALLEL (Send)
+ R4 human approval via LangGraph interrupt() before proposal / message / Connects spend
+ R5 grounded claims only; unsupported-claim rate measured before/after verification
+ R6 RAG design chosen by measurement (V0 + >=4 more variants; groups: Query, Retrieval,
+    Ranking, Indexing, Agentic(V8 or V9))
+ R7 long-term memory only via explicit promotion rules (style memory + outcome memory)
+ R8 tracing on every run; declared + measured p95 latency and cost per job / proposal
+ R9 injection defence, PII masking, polite rate limits, NO scraping
+ R10 docker compose up runs all; public URL with reviewer login
+Open-weight/local models first (profile "open" mandatory; "paid" optional).
+Change request: GigSim "platform policy update" (dated 2 Nov 2026) adds a rule/cost.
+ => rules, prompts, costs MUST live in config, not code. (Evaluated on how cheaply absorbed.)
+Signature extension: choose ONE of X1..X6 (see section 6).
+Deliverables: deployed URL, reviewer login (private), public GitHub repo in required
+structure, R&D report PDF (<=10 pages), 3-min demo video, published Portfolio MCP server,
+technical write-up (1200-1800 words), README with GIF + results table + 3 trace links.
+R&D questions: A tool granularity (40 tasks), B RAG hypotheses+ablation, C single-agent vs
+supervisor vs hand-built graph (50 jobs).
+
+---------------------------------------------------------------------
+2. ENVIRONMENT FACTS & WORKING PROTOCOL
+---------------------------------------------------------------------
+- Submission folder (all work happens here, in place): D:\gigbid   (accessed via MCP
+  filesystem server; allowed dirs include D:\gigbid).
+- Owner's machine is Windows. Prefer commands that work in PowerShell/Git-Bash/WSL2.
+  Makefile needs `make`; also provide scripts/tasks.ps1 equivalents [SIDEWAY].
+- The assistant (Claude) CAN read/write files in D:\gigbid. The assistant CANNOT run
+  code, Docker, Ollama or npm on D:\ . Therefore:
+    * Pure-Python logic is also smoke-tested in the assistant's own sandbox when possible
+      (files copied there) but the OWNER's local test run is the source of truth.
+    * Owner runs: `pytest -q`, `ruff check .`, docker compose, etc. and pastes failures.
+    * Never record a metric in any file unless it came from a real run (results JSON).
+- After every considerable chunk of work: update GIGBID_STATE.txt (the sync rule).
+- Never touch: files that the instructor provides (gigsim/, data/personas/, official
+  policy pack). Our stand-ins live elsewhere (section 4) so CI "gigsim unchanged" rule holds.
+- Secrets: only in environment variables; .env never committed.
+
+---------------------------------------------------------------------
+3. SEQUENTIAL ATTEMPT ROADMAP
+---------------------------------------------------------------------
+Legend: [AI] assistant work | [OWNER] needs the owner | (needs: ...) dependency
+Each phase ends with a "gate" that must pass before the next phase relies on it.
+
+PHASE 0  Foundations                                                  [AI]
+  0.1 Read assignment + starter kit; write this plan + state file.  (DONE this session)
+  0.2 Folder skeleton additions, pinned pyproject (uv), settings/config loader
+      (pydantic-settings), structured logging with PII masking, trace-id contextvar.
+  0.3 ADR 0001..: key decisions (docs/adr).
+  Gate: `pytest -q` + `ruff check .` green locally.            (needs OWNER: Python+uv)
+
+PHASE 1  Data layer ("make seed")
+  1.1 [OWNER] Download chosen Kaggle datasets into data/external/ (see STATE file).
+  1.2 [AI] Dataset profiling + preprocessing -> data/processed/ (job stream, price stats,
+      skills taxonomy). Licences/attribution recorded in docs/DATA_CARD.md.
+  1.3 [AI] Synthetic generators (seeded, reproducible, clearly labelled synthetic=true):
+      3 personas (AI/ML, full-stack, data analyst): CV (PDF), 15-25 case studies (md),
+      repo READMEs + code snippets, client reviews, ~150 past proposals each with outcome
+      won/replied/ignored. Messiness on purpose (same project 3 ways, implied skills).
+  1.4 [AI] Dev eval sets (~200 jobs per persona) with gold labels: bid/skip, scam/not,
+      relevant evidence ids, fair price band. Includes scams, duplicates, planted
+      prompt-injection jobs. Gold labels derived by rules+generator (known by construction),
+      NOT by an LLM judge.
+  Gate: data card complete; counts match; seed is deterministic.
+
+PHASE 2  GigSim stand-in + Marketplace Port (R1)
+  2.1 [AI] gigsim_local/: FastAPI simulator: jobs, clients+histories, connects, proposals,
+      messages, rate limits, random 5xx, hidden client preferences, LLM-or-rule client
+      reply model, policy-update switch (the change request as a toggle). Mirrors the
+      instructor API shape as far as the docx implies; adapter isolates differences.
+  2.2 [AI] agent/marketplace_port.py (typed Protocol, full surface incl. writes) +
+      mcp_servers/marketplace/adapters/gigsim.py.
+  2.3 [OWNER] if instructor GigSim package/docs exist: drop them into gigsim/ and send
+      OpenAPI/docs so the adapter is aligned. (see STATE: blocking question B1)
+  Gate: contract tests pass against gigsim_local.
+
+PHASE 3  MCP servers (Part A, 20 marks)
+  3.1 Portfolio server (official MCP SDK/FastMCP): tools search_evidence, get_case_study,
+      list_skills; resources portfolio://case/{id}, portfolio://proposal/{id}; prompts.
+      Packaged for uvx/Docker so it is publishable.
+  3.2 Marketplace server: read tools + write tools (create_proposal_draft, submit_proposal,
+      send_message); Pydantic in/out schemas; annotations; idempotency keys; dry_run;
+      bearer auth; per-user rate limiter; append-only audit log with trace id.
+  3.3 Workspace server: free slots, tentative hold, email draft (local mock first, optional
+      Google Calendar/Gmail later).
+  3.4 agent/mcp_client.py: MultiServerMCPClient, per-agent allowlists, timeouts, bounded
+      retries/backoff, degraded mode.
+  3.5 Live adapter upwork_live.py through official Upwork MCP (OAuth 2.1), encrypted token
+      store. GitHub MCP for repo ingestion. docs/TOOLS.md one row per tool + trust rationale.
+  3.6 Tests: in-memory MCP client unit tests; schema snapshot contract test; Inspector
+      screenshots [OWNER takes screenshots].
+  3.7 R&D-A experiment: 40 tasks x {fine-grained, coarse, rewritten-descriptions}.
+  Gate: contract snapshots committed; one agent drafts one grounded proposal on GigSim job.
+
+PHASE 4  Advanced RAG (Part B, 20 marks)
+  4.1 Ingestion (PDF, md, README, code, reviews, proposals) + metadata; incremental reindex.
+  4.2 Index: pgvector (dense), BM25 (rank_bm25 or Postgres FTS), optional graph.
+  4.3 Variants V0..V8 (+V9 if time): each a configurable module; retriever.py factory.
+  4.4 Claim verification (rag/verify.py): split -> label supported/partial/unsupported ->
+      rewrite/remove. Report rate before/after.
+  4.5 Evals: Recall@5, MRR, nDCG@10 per persona; decision F1; judge calibration
+      (owner labels 30 items -> Cohen's kappa) [OWNER labels]; ablation; results table
+      regenerated by one command. Hypothesis written BEFORE running (docs/RD_B_hypothesis.md).
+  Gate: evals/results/*.json produced; shipped variant decided + documented.
+
+PHASE 5  LangGraph agents (Part C, 25 marks)
+  5.1 Typed state + reducers; handoff Pydantic models (all 8 required); prompts as
+      versioned .md files (one per node) with hash logged to traces.
+  5.2 Nodes: scout, analyst, risk, matcher, pricing, writer, verifier, critic, compliance,
+      liaison. Model per node from config. Fallback model for cheap nodes.
+  5.3 bid_graph: Send fan-out/in for analyst+risk+matcher -> decision (skip/watch/bid)
+      -> pricing -> writer -> verifier -> critic (<=2 loops) -> compliance -> interrupt().
+  5.4 conversation_graph: classify intent -> draft/slots -> interrupt().
+  5.5 Memory: style memory (from diffed user edits) + outcome memory; promotion rules
+      explicit, unit-tested; memory viewer/delete API.
+  5.6 Postgres checkpointer; crash/resume exactly-once demo; replay from checkpoint.
+  5.7 Budgets (steps, tokens), dead-letter state, "needs attention" state.
+  5.8 Injection defence (delimiting, quarantine, detector node, tool-less analyst).
+  5.9 R&D-C: ReAct single agent vs langgraph-supervisor vs hand graph on 50 dev jobs.
+  Gate: integration tests on gigsim_local; graph PNG/mermaid rendered from code.
+
+PHASE 6  API + Worker (parts D backend, E1)
+  6.1 FastAPI routers: auth, jobs, proposals, approvals, messages, runs, analytics, settings;
+      SSE streaming bridge from LangGraph stream modes; tenant scoping everywhere.
+  6.2 Arq worker on Redis: scheduled scouting, long runs, idempotent job keys.
+  6.3 OpenAPI -> TypeScript client generation script.
+
+PHASE 7  Web UI (Part D, 15 marks)
+  7.1 Next.js + TS + Tailwind; all 9 screens; EvidenceHover, ApprovalPanel, RunTimeline.
+  7.2 Responsive, keyboard accessible, empty/loading/error + "marketplace unavailable".
+  7.3 Playwright >=5 specs: onboarding, approve, reject-with-reason, edit draft, degraded banner.
+
+PHASE 8  Ops (Part E)
+  8.1 docker compose (web, api, worker, 3 MCP servers, gigsim, postgres+pgvector, redis,
+      ollama, phoenix). Dockerfiles per service.
+  8.2 CI: ci.yml (lint, unit, contract, Playwright) + eval.yml (30-job smoke, thresholds);
+      repo-rule checks (no secrets, gigsim unchanged, prompts only in agent/prompts,
+      numbers in README trace to evals/results).
+  8.3 Tracing with Arize Phoenix (OpenTelemetry), trace-id propagation UI->API->graph->MCP.
+  8.4 Budgets declared; measured; one documented optimisation.
+  8.5 [OWNER] Deploy to a public host; reviewer login preloaded.
+
+PHASE 9  Signature extension + change request
+  9.1 Implement chosen extension (section 6) with evaluation.
+  9.2 Apply the 2 Nov 2026 policy update; record files/lines/time changed (diff) for report.
+      (needs: [OWNER] the actual policy-update text from the instructor - blocking B2)
+
+PHASE 10 Portfolio deliverables
+  README (GIF, diagram, results, traces), R&D report (10 pages, 10 sections), write-up
+  draft, resume bullets (numbers only from results files), failure taxonomy (>=10 jobs),
+  docs/AI_USAGE.md (owner must name real incorrect AI suggestions caught), VIVA_PREP.md.
+  [OWNER] records demo video, publishes MCP server + write-up, takes screenshots.
+
+---------------------------------------------------------------------
+4. FOLDER STRUCTURE (required layout kept; additions marked)
+---------------------------------------------------------------------
+Required paths are exactly those in the assignment (README.md, Makefile, pyproject.toml,
+.env.example, apps/{web,api}, agent/, rag/, mcp_servers/, worker/, gigsim/, data/, evals/,
+tests/, infra/, .github/workflows/{ci,eval}.yml, docs/...). Nothing is moved or renamed.
+
+ADDITIONS (justified; discard any for submission if desired):
+ gigsim_local/            [SIDEWAY] our simulator stand-in because gigsim/ was NOT in the
+                          starter kit. When the instructor's gigsim/ arrives, it is dropped
+                          into gigsim/ untouched and config points at it. gigsim_local/ is
+                          then optional (kept as offline fallback / CI fixture).
+ data/external/           raw Kaggle downloads (git-ignored). Licences kept in DATA_CARD.
+ data/synthetic/          our generated personas/jobs (labelled synthetic). Used where
+                          data/personas/ (instructor, PROVIDED) is missing. [SIDEWAY]
+ agent/policy/rules.yaml  policy rules + costs as DATA (absorbs the change request).
+ agent/llm.py             model router: profile+node -> client (OpenAI-compatible base_url,
+                          so Ollama / Groq / OpenRouter / vLLM all work).
+ agent/security/          injection quarantine, PII masking, detector.
+ agent/observability/     tracing setup, cost ledger, token accounting.
+ apps/api/{routers,auth,schemas}/, apps/api/streaming.py   (required)
+ scripts/                 seed, profile datasets, generate TS client, tasks.ps1 for Windows.
+ docs/adr/, docs/images/  (required) ; docs/VIVA_PREP.md, docs/DATASETS.md [SIDEWAY]
+ evals/datasets/ dev only; NEVER the hidden set.
+
+---------------------------------------------------------------------
+5. TECH STACK & HOW TO ATTEMPT (top level)
+---------------------------------------------------------------------
+Language/runtime : Python 3.11+ (uv, pinned lockfile) ; Node 20+ for web.
+Agents           : LangGraph (StateGraph, Send, interrupt, Postgres checkpointer, Store)
+                   + langchain-mcp-adapters (MultiServerMCPClient, Streamable HTTP).
+MCP              : official `mcp` Python SDK (FastMCP) for all 3 own servers; 3rd party:
+                   official Upwork MCP (live) + GitHub MCP (repo ingest).
+LLMs             : profile "open" default. Local: Ollama (Qwen3 4B/8B router tier;
+                   gpt-oss-20b / Qwen 27B 4-bit writer tier if GPU). Hosted open models for
+                   the public deployment (Groq / OpenRouter / Together). Profile "paid"
+                   optional. All via OpenAI-compatible client; model per node in config.
+Embeddings       : BGE-M3 or nomic-embed-text (CPU); reranker bge-reranker-v2-m3 (CPU,
+                   sentence-transformers CrossEncoder). Chosen by eval.
+Vector/lexical   : Postgres + pgvector (one vector store, one fewer service) + BM25
+                   (rank_bm25 / Postgres FTS). In-memory backend for unit tests.
+Backend          : FastAPI, Pydantic v2, SQLAlchemy 2 + Alembic, SSE streaming, JWT/cookie
+                   sessions, Fernet-encrypted OAuth token store, tenant-scoped queries.
+Queue/worker     : Arq on Redis (asyncio-native, fits LangGraph async). Idempotency keys.
+Frontend         : Next.js (App Router) + TypeScript + Tailwind; TS client generated from
+                   OpenAPI (openapi-typescript); Playwright for e2e.
+Observability    : Arize Phoenix (OpenTelemetry/OpenInference; single container; self-hosted)
+                   - chosen over Langfuse v3 to keep compose light on free hosts. ADR.
+Evals            : custom runners + RAGAS-style metrics where useful; calibrated LLM judge.
+CI               : GitHub Actions (ci.yml, eval.yml with thresholds).
+Deploy           : docker compose locally; public host TBD with owner (see STATE).
+
+Approach principles
+ - Ports & adapters: graph never knows which marketplace is used.
+ - Data over code: policy rules, costs, thresholds, model routing, prompts in config/md.
+ - Typed hand-offs everywhere a later node decides something.
+ - Three separations: State (per job) / Execution trace (audit) / Long-term memory
+   (promoted only).
+ - Measure first: no number in README/report without a file in evals/results/.
+ - Safe by construction: write tools only reachable after an approval token produced by the
+   interrupt resume; dry_run first; idempotency keys derived from (user, job, draft hash).
+ - Degrade gracefully: MCP down -> UI banner, queue work, auto-recover.
+
+---------------------------------------------------------------------
+6. SIGNATURE EXTENSION (decision, revisable)
+---------------------------------------------------------------------
+Chosen: X2 Proposal experiments (A/B strategies in GigSim with significance test on reply
+rate) - the only option fully measurable offline in the simulator, strongest "real finding"
+for the write-up, and directly useful later (learn which opening/structure wins).
+Design: strategy registry in config (e.g. "evidence-first" vs "question-first opener"),
+deterministic assignment by hash(job_id), per-strategy outcomes in outcome memory,
+two-proportion z-test / Fisher exact in analytics screen.
+Post-assignment add-ons (not graded): X6 live mode on owner's real Upwork account (already
+enabled by the adapter), X3 portfolio builder from GitHub.
+If the owner prefers another extension, only Phase 9.1 changes.
+
+---------------------------------------------------------------------
+7. KEY RISKS
+---------------------------------------------------------------------
+ - Instructor assets missing (gigsim, personas, official dev sets/policy pack): mitigated
+   by stand-ins + adapter-based design; need owner to ask instructor (STATE B1..B3).
+ - No GPU on free hosts: hosted open-model provider for deployment; Colab/Kaggle for evals.
+ - Change request already live (dated 2 Nov 2026; today is after it): need its text.
+ - Honest-metrics rule: if a run could not be executed, the cell stays EMPTY.

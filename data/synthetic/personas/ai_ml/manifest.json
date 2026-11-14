@@ -1,0 +1,17 @@
+{
+  "persona": "ai_ml",
+  "seed": 20261114,
+  "synthetic": true,
+  "case_studies": 16,
+  "repos": 16,
+  "reviews": 12,
+  "proposals": 150,
+  "evidence_items": 226,
+  "cv_pdf": true,
+  "outcomes": {
+    "ignored": 91,
+    "won": 16,
+    "replied": 43
+  },
+  "fabricated_claim_proposals": 7
+}

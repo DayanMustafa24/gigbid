@@ -1,0 +1,19 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+.next/
+dist/
+build/
+data/processed/
+data/external/
+*.log
+.DS_Store
+# evals/results/ is COMMITTED on purpose (every README/report number must cite a file there)
+# never commit: hidden test set, live-mode client data, tokens
+evals/hidden/
+data/live/

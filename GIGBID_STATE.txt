@@ -1,0 +1,167 @@
+=====================================================================
+GIGBID  -  LIVE STATE  (update after every considerable chunk of work)
+=====================================================================
+Last updated : 2026-11-14  |  Session 2 (Claude)  |  Phase: 0 + 1.3 verified by owner; 1.4 (jobs/dev sets) code written -> owner runs it, then Phase 2
+Companion    : GIGBID_PLAN.txt (stable plan, stack, roadmap). Read it first.
+
+HOW A NEW LLM SESSION SHOULD START
+ 1. Read GIGBID_PLAN.txt then this file. 2. List D:\gigbid via MCP filesystem server.
+ 3. Continue at "NEXT STEP". 4. Before ending, rewrite DONE / NEXT STEP / OWNER TASKS / LOG.
+ Constraints: assistant cannot run code on owner's machine (owner runs tests/docker/ollama
+ and pastes output). Never write metrics that were not produced by a real run.
+ Verified facts: PyPI (2026-11-14): langgraph 1.2.22, langchain-mcp-adapters 0.3.2 (needs
+ mcp 1.x; mcp 2.3.0 exists but not used), fastapi 0.162, pydantic 2.14, arq 0.28.
+ Import paths verified in sandbox: mcp.server.fastmcp.FastMCP,
+ langchain_mcp_adapters.client.MultiServerMCPClient, langgraph.types.{interrupt,Send}.
+
+---------------------------------------------------------------------
+OWNER DECISIONS (from chat)
+---------------------------------------------------------------------
+ - Missing instructor assets (gigsim, personas, dev sets, policy pack): CONTINUE WITH STAND-INS.
+ - Owner has VS Code, Python, Node. Needs commands for Docker Desktop + Ollama (scripts/doctor.ps1).
+ - Style: terse, to the point, fast.
+ - Owner has an Upwork account.
+
+---------------------------------------------------------------------
+DONE
+---------------------------------------------------------------------
+ [x] Phase 0.1 Read assignment + starter kit; GIGBID_PLAN.txt, GIGBID_STATE.txt.
+ [x] Phase 0.2 (code written, NOT yet run by owner):
+     - pyproject.toml: real dependency ranges, extras ml/obs/data/eval/dev, uv, pytest, ruff
+     - .env.example: all variables; .gitignore (evals/results now COMMITTED, data/external ignored)
+     - agent/handoffs.py: all 8 required Pydantic hand-offs (+Requirement, Claim, RiskFlag,...)
+     - agent/config.yaml: profiles open/paid, per-node models, budgets, thresholds, ci_gates
+     - agent/settings.py: Settings (env) + load_config + node_model() resolver
+     - agent/policy/rules.yaml + agent/policy/engine.py: deterministic policy engine (data-driven)
+     - agent/security/pii.py: PII/secret masking; agent/observability/context.py: trace-id + masking logs
+     - tests/unit/test_phase0.py; scripts/doctor.ps1; Makefile (uv based)
+     - docs/adr/0001..0003
+ [x] Dirs created: data/external, data/synthetic, gigsim_local, docs/adr, agent/policy,
+     agent/security, agent/observability, scripts, evals/datasets.
+
+AUDIT of starter kit: only placeholders. Missing: gigsim/, data/personas/, job stream, dev sets,
+ official policy pack, eval.yml, all real code. We build stand-ins (PLAN section 4).
+
+---------------------------------------------------------------------
+NEXT STEP  (updated session 2)
+---------------------------------------------------------------------
+ SESSION-2 UPDATE (latest): owner reported ALL T0 commands pass (pytest, ruff, build_personas). Phase 1.3 DONE.
+ Phase 1.4 code written (scripts/synth/build_jobs.py + tests/unit/test_synth_jobs.py; 9 tests pass in assistant sandbox).
+ CORRECTION: owner's `ruff check .` flagged generated persona code under data/synthetic (E402/F401/F821/syntax in repos/*/src).
+ Fixed by extend-exclude ["data", "evals/datasets"] in pyproject.toml (generated evidence, not project code).
+ Licence D1 CONFIRMED: ODC-By v1.0, https://opendatacommons.org/licenses/by/1-0/index.html (in DATA_CARD).
+ Owner decision: nothing committed yet; single commit at the end (acceptable; recommend one local `git init` commit per phase anyway).
+ OWNER NEXT: uv run pytest -q ; uv run ruff check . ; uv run python -m scripts.synth.build_jobs.
+ THEN (AI): Phase 2 = gigsim_local (FastAPI simulator, policy-update toggle) + agent/marketplace_port.py + gigsim adapter.
+ Licence for Kaggle D1: owner confirms licence NAME + URL from the Kaggle page (short form is enough); fill docs/DATA_CARD.md.
+ (older session-2 status below)
+ SESSION-2 STATUS: Phase 1.3 code is WRITTEN, tested only in the assistant sandbox (5 tests pass, ruff clean there), Owner runs: uv run pytest -q ; uv run ruff check . ; uv run python -m scripts.synth.build_personas
+ and commits data/synthetic/personas/. The "remaining lint error" mentioned by session 1 was NOT verified by session 2
+ (cannot run the owner's repo); owner's `ruff check .` output decides.
+ NEXT (AI): Phase 1.4 = scripts/synth/build_jobs.py: job stream (~1,500) + dev sets (~200/persona) with gold labels by
+ construction (bid/skip, scam, relevant evidence ids from evidence.jsonl gold_skills, fair price band from
+ data/reference/price_stats.json), duplicates, scams, planted prompt injections. Then Phase 2 gigsim_local.
+ (older text below is the session-1 plan, still valid)
+ Phase 0 gate: owner runs `uv sync --extra dev` then `uv run pytest -q` and `uv run ruff check .`
+ and reports failures.
+ Then Phase 1 (does not need the owner): scripts/ generators for synthetic personas (3 x CV,
+ 15-25 case studies, repo READMEs+code, reviews, ~150 proposals with outcomes), 1,500-job stream
+ with scams/duplicates/injections, dev sets with gold labels (by construction). Real Kaggle data
+ (owner downloads) feeds price statistics + realistic job text; docs/DATA_CARD.md records
+ sources, licences, synthetic/real split.
+ Then Phase 2: gigsim_local + marketplace port.
+
+---------------------------------------------------------------------
+OWNER TASKS  (session 2: do T0 first)
+---------------------------------------------------------------------
+ T0. In D:\gigbid run, in order, and paste any failure/last lines:
+       uv sync --extra dev --extra data      (reportlab needed for cv.pdf; without it cv.pdf is skipped)
+       uv run pytest -q                      (expect previous 8 + 5 new tests)
+       uv run ruff check .                   (add --fix for import sorting)
+       uv run python -m scripts.synth.build_personas   (prints one JSON manifest per persona)
+       git status data/synthetic             (should show ~3 x 100 small files)
+     Also run (if not done): uv run python -m scripts.parse_upwork ; uv run python -m scripts.check_env
+ NOW
+ T1. Run: powershell -ExecutionPolicy Bypass -File scripts\doctor.ps1   (add -Install to install
+     missing tools via winget). Paste the output to me (gives GPU/RAM too).
+ T2. After uv is installed: in D:\gigbid run `uv sync --extra dev` ; `uv run pytest -q`.
+ T3. Download Kaggle datasets D1 (+D2) into data/external/ (see GIGBID_PLAN / chat), with licence
+     text, and send me file names + header + 2 rows of each CSV.
+ T4. Create the empty public GitHub repo; make a fine-grained read-only GitHub token
+     (github.com/settings/personal-access-tokens/new -> public repos read-only); put it in .env
+     as GITHUB_PERSONAL_ACCESS_TOKEN. Do not paste it in chat.
+ T5. Upwork: connect to the official MCP once from any MCP client (see chat) to confirm your account
+     works; email mcp-support@upwork.com only if it refuses. Tell me what happened.
+ T6. Get the 2 Nov 2026 policy update text from the instructor (course portal/announcement/email, or
+     GigSim's docs/changelog). I cannot fetch it: it is not public.
+ LATER
+ K1 Groq/OpenRouter key (public deployment + evals) | K3 Google OAuth (optional) | K4 hosting
+ account | L1 label 30 proposals (judge kappa) | L2 classmates for human panel |
+ L3 Inspector screenshots, demo video, publish MCP server + write-up, AI_USAGE.md mistakes.
+
+---------------------------------------------------------------------
+OPEN QUESTIONS
+---------------------------------------------------------------------
+ Q1 GPU/VRAM + RAM (doctor.ps1 prints it). Q2 OK with extension X2? (assumed yes)
+ Q3 Deadline date. Q4 Paid-API budget for optional profile?
+
+---------------------------------------------------------------------
+DECISIONS LOG
+---------------------------------------------------------------------
+ D-001 submission folder D:\gigbid; plans in root .txt files.
+ D-002 simulator stand-in = gigsim_local/ (gigsim/ left for instructor copy).
+ D-003 pgvector, Arq, Phoenix, OpenAI-compatible client (ADR 0002).
+ D-004 extension X2 (revisable).
+ D-005 rules/costs/prompts/models are data (ADR 0003).
+ D-006 evals/results/ is committed (assignment requires), unlike starter .gitignore.
+ D-007 mcp pinned <2 for langchain-mcp-adapters compatibility.
+
+---------------------------------------------------------------------
+LOG 2026-11-14 (session 1, later)
+---------------------------------------------------------------------
+ - Owner ran doctor: Python 3.13.15, node 24, git ok; uv installed; Docker install FAILED (deferred
+   to Phase 6/8); Ollama installed but not running; NO GPU; RAM 11 GB. => local profile = qwen3:4b
+   only; writer/critic/liaison must use a hosted open model (Groq/OpenRouter) or be measured on CPU.
+ - uv sync + pytest: 8 passed. ruff found only style issues -> set line-length 120 and
+   asyncio_default_fixture_loop_scope in pyproject; shortened pii.py. Owner should run
+   `uv run ruff check . --fix` to auto-sort imports in starter files.
+ - requires-python now >=3.11,<3.14 (3.13 local; owner synced with --python 3.12).
+ - Ollama models must live on D: (C: full): set OLLAMA_MODELS=D:\ollama\models (user env var).
+ - Dataset received: data/external/<folder>/upwork-jobs.csv. Columns: title, link, description,
+   published_date, is_hourly, hourly_low, hourly_high, budget, country. Skills + Category are
+   embedded INSIDE description text ("Budget: $500Posted On: ...Category: X Skills: a, b, c" and the
+   skills list is duplicated). Posts dated Feb 2024. Separator looks like TAB. Need a parser.
+ - Wrote scripts/profile_upwork.py (writes data/processed/upwork_profile.json). Owner to run:
+   `uv sync --extra dev --extra data` then `uv run python -m scripts.profile_upwork`.
+ NEXT: parse CSV -> data/processed/jobs_real.parquet; then synthetic persona generators.
+
+---------------------------------------------------------------------
+LOG 2026-11-14 (session 2)
+ - Verified by reading D:\gigbid: data/synthetic was EMPTY and no persona generator existed, so session 1's last
+   step was not done. Verified present: handoffs, config, policy engine, parse_upwork, price_stats.json, jobs_real.jsonl.
+ - Added scripts/synth/{__init__,personas,render,build_personas}.py, tests/unit/test_synth_personas.py.
+   personas.py = 16 hand-authored projects x 3 personas (skills named in prose vs `implied` only in code/stack/reviews).
+   build_personas: per persona cv.md/cv.pdf, 16 case studies, 16 repos (README+code), reviews.jsonl,
+   150 proposals.jsonl (outcome via hidden latent score ~8% won/28% replied/64% ignored; ~8% carry a labelled
+   fabricated claim), evidence.jsonl (gold catalogue), profile.json, manifest.json. Seeded and deterministic.
+ - Updated Makefile `seed` target and docs/DATA_CARD.md (sources, synthetic split, outcome-model caveat).
+ - Sandbox results are NOT project metrics; nothing written to evals/results.
+
+ - Phase 1.4: build_jobs.py makes 3 x 200 dev jobs (110 fit, 10 injected, 30 unfit, 20 low-budget, 20 scam, 10 dup) with
+   gold by construction, 1,500-job stream (+gold sidecar), clients.jsonl. DATA_CARD section 5 + Makefile seed updated.
+
+---------------------------------------------------------------------
+LOG 2026-11-14 (session 1, data step)
+---------------------------------------------------------------------
+ - Profile result (real data): 53,058 rows, 2023-12-02..2024-02-23, 43% hourly, 21,873 with fixed
+   budget (median $100), hourly_low median $15, 5,981 duplicate titles, 0 duplicate links,
+   category+skills present in ~100%/99%. Top: Full Stack Dev 3294, Graphic Design 3278, Social Media 2888.
+ - Owner put GROQ_API_KEY and GITHUB_PERSONAL_ACCESS_TOKEN in .env (not yet verified).
+ - Wrote + sandbox-tested scripts/parse_upwork.py (parser + persona_domain tagging + price stats)
+   and tests/unit/test_parse_upwork.py, scripts/check_env.py (verifies groq/github/ollama).
+   Owner must run: `uv run python -m scripts.parse_upwork` (-> data/processed/jobs_real.jsonl,
+   data/reference/price_stats.json [commit this]) and `uv run python -m scripts.check_env`.
+ - KNOWN WEAKNESS: persona_domain is first-match keyword; "sql"/"api" skills pull web jobs into
+   data_analyst. Improve with category-weighted scoring before using it for persona job pools.
+ NEXT: Phase 1.3 synthetic persona generators (3 personas), 1.4 job stream + dev sets (gold labels by
+   construction, scams/duplicates/injections), DATA_CARD.md. Then Phase 2 gigsim_local.
