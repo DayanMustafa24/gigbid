@@ -1,0 +1,11 @@
+# STAND-IN for the GigSim "platform policy update" dated 2 Nov 2026.
+# The official text is not available to us. Replace the values below (or add keys + one line in world.py)
+# when the instructor's text arrives. Toggle: env GIGSIM_POLICY_UPDATE=1 or POST /admin/policy-update.
+id: PU-2026-11-02
+effective: "2026-11-02"
+provenance: stand-in (invented, NOT the official policy text)
+connects_surcharge: 2          # extra Connects per proposal
+require_ai_disclosure: true    # proposals must carry ai_disclosure=true
+notes:
+  - Every proposal costs 2 additional Connects.
+  - Proposals created with AI assistance must set ai_disclosure=true; otherwise submission is rejected.

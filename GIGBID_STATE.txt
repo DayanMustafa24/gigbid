@@ -1,7 +1,7 @@
 =====================================================================
 GIGBID  -  LIVE STATE  (update after every considerable chunk of work)
 =====================================================================
-Last updated : 2026-11-14  |  Session 2 (Claude)  |  Phase: 0 + 1.3 verified by owner; 1.4 (jobs/dev sets) code written -> owner runs it, then Phase 2
+Last updated : 2026-11-14  |  Session 3 (Claude)  |  Phase: 0, 1 verified by owner (21 tests, ruff clean, build_jobs OK); Phase 2.1+2.2 code written -> owner runs gate, then Phase 3
 Companion    : GIGBID_PLAN.txt (stable plan, stack, roadmap). Read it first.
 
 HOW A NEW LLM SESSION SHOULD START
@@ -43,9 +43,24 @@ AUDIT of starter kit: only placeholders. Missing: gigsim/, data/personas/, job s
  official policy pack, eval.yml, all real code. We build stand-ins (PLAN section 4).
 
 ---------------------------------------------------------------------
-NEXT STEP  (updated session 2)
+NEXT STEP  (updated session 3)
 ---------------------------------------------------------------------
- SESSION-2 UPDATE (latest): owner reported ALL T0 commands pass (pytest, ruff, build_personas). Phase 1.3 DONE.
+ SESSION-3 UPDATE (latest): owner verified Phase 1.4 (ruff clean, 21 passed, build_jobs: 3 x 200 dev [120 bid/80 skip], 1500 stream, 2025 clients). PHASE 1 DONE.
+ PHASE 2 code written (sandbox: 22 tests pass, ruff clean; NOT yet run on owner machine):
+   gigsim_local/{__init__,__main__,config,policy_update(.py/.yaml),sample_data,client_model,world,app,README}
+   agent/marketplace_port.py (typed port: 11 methods, errors, PlatformPolicy, dry-run preview) + get_marketplace(mode)
+   mcp_servers/marketplace/adapters/gigsim.py (retry/backoff/Retry-After/throttle/idempotent writes/error mapping)
+   tests/unit/test_gigsim_local.py (13) + tests/contract/test_marketplace_port.py (12); pyproject ruff: bugbear Depends + E501 ignores for gigsim_local, mcp_servers; Makefile target `gigsim`.
+   Policy update is a STAND-IN (gigsim_local/policy_update.yaml: +2 Connects, ai_disclosure required). Replace when owner gets real text (B2).
+ OWNER NEXT (gate for Phase 2): uv run ruff check . ; uv run pytest -q ; then GIGSIM_DATASET=sample uv run python -m gigsim_local
+   (open http://127.0.0.1:8081/docs, expect 200) ; optional: uv run python -m gigsim_local with real seed data.
+   If ruff reports I001 import order, run `uv run ruff check . --fix`. Paste any failure.
+ NEXT (AI) = Phase 3 MCP servers: 3.1 Portfolio server (FastMCP; tools search_evidence/get_case_study/list_skills; reads data/synthetic/personas),
+   3.2 Marketplace server wrapping get_marketplace() (read + write tools, Pydantic schemas, annotations, idempotency, dry_run, bearer auth, rate limit, audit log),
+   3.3 Workspace server (slots, hold, email draft; local mock), 3.4 agent/mcp_client.py, docs/TOOLS.md. agent/policy/rules.yaml should read PlatformPolicy at runtime (Phase 5).
+ Still open: B1 instructor gigsim/ package + docs, B2 2 Nov policy text (not blocking; stand-ins in place).
+ (older session-2 text below)
+ SESSION-2 UPDATE: owner reported ALL T0 commands pass (pytest, ruff, build_personas). Phase 1.3 DONE.
  Phase 1.4 code written (scripts/synth/build_jobs.py + tests/unit/test_synth_jobs.py; 9 tests pass in assistant sandbox).
  CORRECTION: owner's `ruff check .` flagged generated persona code under data/synthetic (E402/F401/F821/syntax in repos/*/src).
  Fixed by extend-exclude ["data", "evals/datasets"] in pyproject.toml (generated evidence, not project code).
@@ -134,6 +149,13 @@ LOG 2026-11-14 (session 1, later)
  - Wrote scripts/profile_upwork.py (writes data/processed/upwork_profile.json). Owner to run:
    `uv sync --extra dev --extra data` then `uv run python -m scripts.profile_upwork`.
  NEXT: parse CSV -> data/processed/jobs_real.parquet; then synthetic persona generators.
+
+---------------------------------------------------------------------
+LOG 2026-11-14 (session 3)
+ - Verified by reading D:\gigbid: state + plan files, build_jobs.py, port/adapters were TODO stubs, gigsim_local empty. Built Phase 2 (see NEXT STEP).
+ - Design notes: idempotency by (scope,key)+body hash; after-commit fault mode proves retries never double-spend; Retry-After honoured with cap
+   (max_retry_wait=10s); client-side sliding-window throttle uses config marketplace.max_requests_per_minute; admin routes never in port.
+ - Sandbox results are NOT project metrics. gigsim client model is rule-based/seeded (assignment's is LLM-based): label stand-in in reports.
 
 ---------------------------------------------------------------------
 LOG 2026-11-14 (session 2)

@@ -1,4 +1,4 @@
-.PHONY: install dev api test lint eval seed demo
+.PHONY: install dev api test lint eval seed demo gigsim
 install:
 	uv sync --extra dev
 
@@ -24,3 +24,7 @@ seed:
 
 demo:
 	@echo "TODO Phase 8: docker compose -f infra/docker-compose.yml up"
+
+# Phase 2: local marketplace simulator on :8081 (set GIGSIM_DATASET=sample to run without `make seed`)
+gigsim:
+	uv run python -m gigsim_local
