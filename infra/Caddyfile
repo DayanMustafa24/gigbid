@@ -1,0 +1,11 @@
+# {$DOMAIN} is set in .env, e.g. 129.146.10.20.sslip.io  (sslip.io gives a free hostname for any IP; Caddy fetches HTTPS certs itself)
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy web:3000
+}
+
+# Trace UI for the public trace links (synthetic data, PII masked). Phoenix has no login: only expose it for grading.
+phoenix.{$DOMAIN} {
+	encode gzip
+	reverse_proxy phoenix:6006
+}

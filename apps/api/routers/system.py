@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, text
 
+from agent.checkpointing import checkpointer_kind
 from agent.policy.engine import load_policy
 from agent.runtime import list_personas, persona_dir, persona_visible
 
@@ -40,7 +41,7 @@ async def ready(c: Container = Depends(get_container)) -> dict[str, Any]:
              "models": c.llm is not None, "injection_classifier": c.classifier is not None}
     degraded = [k for k, v in parts.items() if v in (False, "down", "unconfigured")]
     return {"status": "ok" if not degraded else "degraded", "degraded": degraded, "components": parts, "policy_version": load_policy().version,
-            "mode": c.settings.marketplace_mode or c.cfg["marketplace"]["mode"], "checkpointer_kind": c.cp_kind or c.cfg["checkpointer"]["kind"]}
+            "mode": c.settings.marketplace_mode or c.cfg["marketplace"]["mode"], "checkpointer_kind": c.cp_kind or checkpointer_kind(c.cfg)}
 
 
 @router.get("/personas", response_model=list[PersonaOut])

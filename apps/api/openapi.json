@@ -323,6 +323,39 @@
         "title": "PortfolioOut",
         "type": "object"
       },
+      "PortfolioPdfIn": {
+        "description": "A PDF (typically the CV), sent base64-encoded in JSON; its text is extracted server-side and stored like any other file.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "case_study",
+              "readme",
+              "cv"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "pdf_base64": {
+            "maxLength": 7500000,
+            "minLength": 20,
+            "title": "Pdf Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "pdf_base64"
+        ],
+        "title": "PortfolioPdfIn",
+        "type": "object"
+      },
       "PortfolioProfileIn": {
         "properties": {
           "display_name": {
@@ -1660,6 +1693,48 @@
           }
         },
         "summary": "Delete File",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/pdf": {
+      "post": {
+        "description": "Same as /files, but the text comes from a PDF (CV, case study). Extraction is bounded (size, pages) and never OCRs.",
+        "operationId": "add_pdf_portfolio_pdf_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortfolioPdfIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Pdf",
         "tags": [
           "portfolio"
         ]

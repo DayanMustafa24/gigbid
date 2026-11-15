@@ -10,6 +10,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 
+from agent.memory.stats import two_proportion_z
+
 from ..container import Container
 from ..db import RunEvent, User
 from ..deps import current_user, get_container, get_service
@@ -24,6 +26,23 @@ def percentile(values: list[float], p: float) -> float | None:
         return None
     s = sorted(values)
     return round(s[max(0, math.ceil(p * len(s)) - 1)], 3)
+
+
+def strategy_experiment(by_persona: dict[str, dict[str, dict[str, int]]]) -> dict[str, Any]:
+    """X2 proposal experiments: pool measured outcomes per opener strategy over personas and test the reply-rate difference of two arms.
+    Raw counts and a pooled two-proportion z-test; no estimate is made up (arms with no outcomes are simply absent)."""
+    arms: dict[str, dict[str, int]] = {}
+    for table in by_persona.values():
+        for name, t in table.items():
+            a = arms.setdefault(name, {"n": 0, "replied": 0, "won": 0})
+            for k in a:
+                a[k] += int(t.get(k, 0))
+    out: dict[str, Any] = {"arms": arms, "test": None}
+    if len(arms) == 2:
+        (na, a), (nb, b) = sorted(arms.items())
+        z, p = two_proportion_z(a["replied"], a["n"], b["replied"], b["n"])
+        out["test"] = {"metric": "reply_rate", "a": na, "b": nb, "z": round(z, 4), "p_value": round(p, 4), "significant_at_0.05": p < 0.05}
+    return out
 
 
 @router.get("/summary")
@@ -46,6 +65,10 @@ async def summary(persona: str | None = Query(None, max_length=60), limit: int =
         row["analysed"] += 1
         row["bid"] += s.get("decision") == "bid"
         row["submitted"] += s.get("approval_status") == "submitted"
+    cat_outcomes = await asyncio.to_thread(c.memory.category_table, user.id, persona)
+    for cat, t in cat_outcomes.items():  # measured marketplace outcomes per category; absent until the marketplace reports some
+        row = by_category.setdefault(cat, {"analysed": 0, "bid": 0, "submitted": 0})
+        row.update({"outcomes": t["n"], "replied": t["replied"], "won": t["won"]})
     compute: dict[str, float] = {}
     ids = [r.id for r in runs]
     async with c.sessions() as db:
@@ -59,8 +82,9 @@ async def summary(persona: str | None = Query(None, max_length=60), limit: int =
     personas = sorted({r.persona for r in runs})
     outcomes = {p: await asyncio.to_thread(c.memory.outcome_stats, user.id, p) for p in personas}
     strategies = {p: await asyncio.to_thread(c.memory.strategy_table, user.id, p) for p in personas}
+    experiment = strategy_experiment(strategies)
     return {"runs": {"total": len(runs), "by_status": dict(Counter(r.status for r in runs)), "by_kind": dict(Counter(r.kind for r in runs))},
             "funnel": funnel, "by_category": by_category,
             "compute_latency_s": {"n": len(finished), "p50": percentile(finished, 0.5), "p95": percentile(finished, 0.95)},
             "usage": {"tokens": int(tokens), "cost_usd": round(float(cost), 6)},
-            "outcomes": outcomes, "strategies": strategies}
+            "outcomes": outcomes, "strategies": strategies, "experiment": experiment}

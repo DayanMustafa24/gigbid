@@ -1,4 +1,4 @@
-.PHONY: install dev api worker openapi ts-client migrate test lint eval seed demo gigsim rag-eval rag-ablation rag-verify rag-smoke graphs rdc rdc-offline
+.PHONY: install dev api worker openapi ts-client migrate test lint eval seed demo gigsim rag-eval rag-ablation rag-verify rag-smoke graphs rdc rdc-offline up down preflight pg-smoke smoke-live repo-rules ci-smoke x2
 install:
 	uv sync --extra dev
 
@@ -37,8 +37,35 @@ seed:
 	uv run python -m scripts.synth.build_personas
 	uv run python -m scripts.synth.build_jobs
 
-demo:
-	@echo "TODO Phase 8: docker compose -f infra/docker-compose.yml up"
+# Phase 8: full stack in containers (needs Docker + a filled .env: run `make preflight` first)
+preflight:
+	uv run python -m scripts.preflight
+
+up: preflight
+	docker compose --env-file .env -f infra/docker-compose.yml up --build -d --wait
+
+down:
+	docker compose --env-file .env -f infra/docker-compose.yml down
+
+demo: up
+	@echo "Web http://localhost:3000 | API http://localhost:8000/docs | Phoenix http://localhost:6006"
+
+pg-smoke:
+	uv run python -m scripts.postgres_smoke
+
+repo-rules:
+	uv run python -m scripts.check_repo_rules
+
+ci-smoke:
+	uv run python -m evals.runners.ci_smoke --sample 30
+
+# real browser against the running compose stack (LIVE_URL, REVIEWER_EMAIL, REVIEWER_PASSWORD from the environment)
+smoke-live:
+	cd apps/web && npm run test:live
+
+# Phase 9 X2 proposal experiments (real models; writes x2_experiment* into evals/results)
+x2:
+	uv run python -m evals.runners.x2_experiment --sample 120 --seed 42
 
 # Phase 2: local marketplace simulator on :8081 (set GIGSIM_DATASET=sample to run without `make seed`)
 gigsim:
@@ -69,3 +96,8 @@ rdc-offline:
 # Phase 5: architecture diagrams generated from the compiled graphs -> docs/images/*.mmd (add --png if `mmdc` is installed)
 graphs:
 	uv run python -m scripts.render_graphs
+
+# Phase 3.7 R&D-A: tool granularity, 40 tasks x 4 tool sets (real model; writes evals/results/rda_tool_granularity.*)
+rda:
+	uv run python -m evals.runners.rda_tools
+

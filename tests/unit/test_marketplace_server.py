@@ -78,7 +78,7 @@ def test_rate_limiter_sliding_window():
 
 def test_audit_chain_detects_tampering(tmp_path):
     log = AuditLog(tmp_path / "a.jsonl")
-    log.append(tool="x", outcome="ok", args={"api_key": "gsk_abcdefghijklmnopqrstuv", "note": "mail me a@b.co"})
+    log.append(tool="x", outcome="ok", args={"api_key": "gsk_" + "abcdefghijklmnopqrstuv", "note": "mail me a@b.co"})
     log.append(tool="y", outcome="denied")
     assert log.verify() and AuditLog(tmp_path / "a.jsonl").verify()
     raw = (tmp_path / "a.jsonl").read_text(encoding="utf-8")

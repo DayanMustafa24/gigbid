@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "playwright test --project=unit",
     "test:e2e": "playwright test --project=e2e",
+    "test:live": "playwright test --project=live",
     "test": "playwright test"
   },
   "dependencies": {

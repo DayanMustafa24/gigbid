@@ -1,3 +1,194 @@
-# TODO: Define web, API, worker, MCP servers, GigSim, Postgres, Redis,
-# vector store and local model service as appropriate.
-services: {}
+# GigBid full stack. Run from the repo root:
+#   docker compose --env-file .env -f infra/docker-compose.yml up --build -d --wait
+# Web http://localhost:3000 | API http://localhost:8000/docs | Phoenix traces http://localhost:6006
+# Secrets come from ../.env (never baked into images). Service-to-service URLs below override the localhost values in .env.
+name: gigbid
+
+x-python: &python
+  build: {context: .., dockerfile: infra/docker/python.Dockerfile}
+  restart: unless-stopped
+  env_file: [{path: ../.env, required: false}]
+
+x-env: &env
+  APP_ENV: production
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}          # set true once served over HTTPS
+  CORS_ORIGINS: ""                                # same-origin proxy: no CORS in production
+  MARKETPLACE_MODE: ${MARKETPLACE_MODE:-gigsim}
+  MARKETPLACE_ACCESS: mcp
+  DATABASE_URL: postgresql://gigbid:${POSTGRES_PASSWORD:-gigbid}@postgres:5432/gigbid                   # graph checkpoints
+  APP_DATABASE_URL: postgresql+psycopg://gigbid:${POSTGRES_PASSWORD:-gigbid}@postgres:5432/gigbid       # users / runs / events
+  CHECKPOINTER: postgres
+  REDIS_URL: redis://redis:6379/0
+  GIGSIM_BASE_URL: http://gigsim:8081
+  MCP_PORTFOLIO_URL: http://portfolio-mcp:9101/mcp
+  MCP_MARKETPLACE_URL: http://marketplace-mcp:9102/mcp
+  MCP_WORKSPACE_URL: http://workspace-mcp:9103/mcp
+  OLLAMA_BASE_URL: http://ollama:11434/v1
+  PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
+  TRACING: "on"                                     # Phoenix runs in this stack (a local .env may say off)
+
+x-mcp-env: &mcp-env
+  <<: *env
+  MCP_HOST: 0.0.0.0
+
+x-tcp-check: &tcp-check
+  interval: 10s
+  timeout: 4s
+  retries: 6
+  start_period: 10s
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gigbid
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gigbid}
+      POSTGRES_DB: gigbid
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/00-vector.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gigbid -d gigbid"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  phoenix:                       # OpenTelemetry/OpenInference trace UI (ADR: chosen over Langfuse to keep compose light). Pin the tag after the first good run.
+    image: arizephoenix/phoenix:latest
+    restart: unless-stopped
+    environment:
+      PHOENIX_WORKING_DIR: /mnt/data
+    volumes: [phoenixdata:/mnt/data]
+    ports: ["127.0.0.1:6006:6006"]   # public access only through Caddy (phoenix.<DOMAIN>)
+
+  ollama:                        # optional local models: docker compose --profile ollama up -d ; then: docker compose exec ollama ollama pull qwen3:4b
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    restart: unless-stopped
+    volumes: [ollamadata:/root/.ollama]
+
+  gigsim:
+    <<: *python
+    command: ["python", "-m", "gigsim_local"]
+    environment:
+      <<: *env
+      GIGSIM_HOST: 0.0.0.0
+      GIGSIM_DATASET: ${GIGSIM_DATASET:-stream}
+      GIGSIM_FAULT_RATE: ${GIGSIM_FAULT_RATE:-0.02}
+    healthcheck:
+      <<: *tcp-check
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/docs', timeout=3)"]
+
+  portfolio-mcp:
+    <<: *python
+    command: ["python", "-m", "mcp_servers.portfolio.server"]
+    environment: *mcp-env
+    healthcheck:
+      <<: *tcp-check
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 9101), 3)"]
+
+  marketplace-mcp:
+    <<: *python
+    command: ["python", "-m", "mcp_servers.marketplace.server"]
+    environment: *mcp-env
+    volumes: [audit:/app/data/audit]          # append-only, hash-chained audit log
+    depends_on:
+      gigsim: {condition: service_healthy}
+    healthcheck:
+      <<: *tcp-check
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 9102), 3)"]
+
+  workspace-mcp:
+    <<: *python
+    command: ["python", "-m", "mcp_servers.workspace.server"]
+    environment: *mcp-env
+    volumes: [workspace:/app/data/workspace]
+    healthcheck:
+      <<: *tcp-check
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 9103), 3)"]
+
+  api:
+    <<: *python
+    # migrations first (Alembic), then the server; create_all in the app is then a no-op
+    command: ["sh", "-c", "python -m apps.api.migrate upgrade && exec uvicorn apps.api.main:app --host 0.0.0.0 --port 8000 --proxy-headers"]
+    environment: *env
+    volumes:
+      - memory:/app/data/memory
+      - userdata:/app/data/user
+    ports: ["127.0.0.1:8000:8000"]
+    stop_grace_period: 30s
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      portfolio-mcp: {condition: service_healthy}
+      marketplace-mcp: {condition: service_healthy}
+      workspace-mcp: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+      start_period: 40s
+
+  worker:
+    <<: *python
+    command: ["arq", "worker.main.WorkerSettings"]
+    environment: *env
+    volumes:
+      - memory:/app/data/memory
+      - userdata:/app/data/user
+    stop_grace_period: 30s
+    depends_on:
+      api: {condition: service_healthy}           # the API container applies the migrations
+      redis: {condition: service_healthy}
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/docker/web.Dockerfile
+      args: {API_URL: "http://api:8000"}
+    restart: unless-stopped
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  caddy:                         # public HTTPS entry point (automatic Let's Encrypt certificates). Only service with public ports.
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    depends_on:
+      web: {condition: service_healthy}
+
+volumes:
+  caddydata:
+  pgdata:
+  redisdata:
+  phoenixdata:
+  ollamadata:
+  audit:
+  workspace:
+  memory:
+  userdata:

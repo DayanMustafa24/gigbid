@@ -1,7 +1,7 @@
 """Application database (users, runs, run events, per-user settings). SQLAlchemy 2 async.
 
 Default is a local SQLite file (zero services, works on the owner's machine today); production points APP_DATABASE_URL at Postgres
-(`postgresql+asyncpg://...`; add `asyncpg` to the image). Same models, same code. Every row that belongs to a person carries `owner_id`
+(`postgresql+psycopg://...`; psycopg 3 is already a dependency and supports async). Same models, same code. Every row that belongs to a person carries `owner_id`
 and every query filters on it (tenant scoping). Graph checkpoints live elsewhere (agent/checkpointing.py); long-term memory in
 agent/memory. Schema changes go through Alembic (apps/api/migrations, `make migrate`); `create_all` is only the zero-config dev/test bootstrap
 (a no-op once migrations created the tables). A test fails if the models and the migrations drift apart.

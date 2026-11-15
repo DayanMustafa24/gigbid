@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS memory_items(
 CREATE TABLE IF NOT EXISTS outcomes(
   id INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL, persona TEXT NOT NULL, proposal_key TEXT NOT NULL,
   strategy TEXT NOT NULL DEFAULT '', outcome TEXT NOT NULL, source TEXT NOT NULL, ts TEXT NOT NULL,
-  UNIQUE(owner, persona, proposal_key));
+  category TEXT NOT NULL DEFAULT '', UNIQUE(owner, persona, proposal_key));
 CREATE TABLE IF NOT EXISTS memory_log(
   id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, owner TEXT NOT NULL, action TEXT NOT NULL, detail TEXT NOT NULL);
 """
@@ -62,6 +62,9 @@ class MemoryStore:
             if raw != ":memory:":
                 self._db.execute("PRAGMA journal_mode=WAL")
             self._db.executescript(_SCHEMA)
+            if "category" not in {r[1] for r in self._db.execute("PRAGMA table_info(outcomes)")}:  # databases created before categories existed
+                self._db.execute("ALTER TABLE outcomes ADD COLUMN category TEXT NOT NULL DEFAULT ''")
+                self._db.commit()
 
     def close(self) -> None:
         self._db.close()
@@ -122,7 +125,8 @@ class MemoryStore:
                 "SELECT text FROM memory_items WHERE owner=? AND persona=? AND status='active' ORDER BY hits DESC, id", (owner, persona))]
 
     # ---- outcome memory: the ONLY input is a marketplace outcome of a sent proposal ---------------------------------------------
-    def record_outcome(self, owner: str, persona: str, proposal_key: str, strategy: str | None, outcome: str, source: str = "marketplace") -> None:
+    def record_outcome(self, owner: str, persona: str, proposal_key: str, strategy: str | None, outcome: str, source: str = "marketplace",
+                       category: str | None = None) -> None:
         """Upsert; an outcome only moves forward (ignored < replied < won), so a late poll cannot erase a win."""
         if outcome not in OUTCOME_RANK:
             raise ValueError(f"outcome must be one of {sorted(OUTCOME_RANK)}")
@@ -130,11 +134,12 @@ class MemoryStore:
             old = self._db.execute("SELECT outcome FROM outcomes WHERE owner=? AND persona=? AND proposal_key=?",
                                    (owner, persona, proposal_key)).fetchone()
             if old is None:
-                self._db.execute("INSERT INTO outcomes(owner, persona, proposal_key, strategy, outcome, source, ts) VALUES (?,?,?,?,?,?,?)",
-                                 (owner, persona, proposal_key, strategy or "", outcome, source, _now()))
+                self._db.execute("INSERT INTO outcomes(owner, persona, proposal_key, strategy, outcome, source, ts, category) VALUES (?,?,?,?,?,?,?,?)",
+                                 (owner, persona, proposal_key, strategy or "", outcome, source, _now(), category or ""))
             elif OUTCOME_RANK[outcome] > OUTCOME_RANK[old["outcome"]]:
-                self._db.execute("UPDATE outcomes SET outcome=?, source=?, ts=? WHERE owner=? AND persona=? AND proposal_key=?",
-                                 (outcome, source, _now(), owner, persona, proposal_key))
+                self._db.execute("UPDATE outcomes SET outcome=?, source=?, ts=?, category=CASE WHEN ?<>'' THEN ? ELSE category END"
+                                 " WHERE owner=? AND persona=? AND proposal_key=?",
+                                 (outcome, source, _now(), category or "", category or "", owner, persona, proposal_key))
             self._db.commit()
 
     def outcome_stats(self, owner: str, persona: str, strategy: str | None = None) -> dict[str, int]:
@@ -145,6 +150,21 @@ class MemoryStore:
             by = {r["outcome"]: r["c"] for r in self._db.execute(q + " GROUP BY outcome", args)}
         won, replied_only, ignored = by.get("won", 0), by.get("replied", 0), by.get("ignored", 0)
         return {"n": won + replied_only + ignored, "replied": won + replied_only, "won": won}
+
+    def category_table(self, owner: str, persona: str | None = None) -> dict[str, dict[str, int]]:
+        """Outcome counts per job category (all personas when `persona` is None). Outcomes recorded without a category are 'uncategorised'."""
+        q, args = "SELECT category, outcome, COUNT(*) c FROM outcomes WHERE owner=?", [owner]
+        if persona is not None:
+            q, args = q + " AND persona=?", [*args, persona]
+        table: dict[str, dict[str, int]] = {}
+        with self._lock:
+            rows = list(self._db.execute(q + " GROUP BY category, outcome", args))
+        for r in rows:
+            t = table.setdefault(r["category"] or "uncategorised", {"n": 0, "replied": 0, "won": 0})
+            t["n"] += r["c"]
+            t["replied"] += r["c"] if r["outcome"] in ("replied", "won") else 0
+            t["won"] += r["c"] if r["outcome"] == "won" else 0
+        return dict(sorted(table.items()))
 
     def strategy_table(self, owner: str, persona: str) -> dict[str, dict[str, int]]:
         """Per opener strategy counts (X2 proposal experiments, Phase 9)."""

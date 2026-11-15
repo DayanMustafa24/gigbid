@@ -396,6 +396,7 @@ class RunService:
                 continue
             outcome = OUTCOME_OF_STATUS.get(prop.status)
             if outcome:
-                await asyncio.to_thread(self.c.memory.record_outcome, owner, r.persona, pid, r.summary.get("strategy"), outcome)
+                await asyncio.to_thread(self.c.memory.record_outcome, owner, r.persona, pid, r.summary.get("strategy"), outcome,
+                                       "marketplace", (r.summary.get("job") or {}).get("category"))
                 stats["recorded"] += 1
         return stats

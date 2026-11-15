@@ -37,6 +37,14 @@ class PortfolioFileIn(BaseModel):
     text: str = Field(min_length=20, max_length=200_000)
 
 
+class PortfolioPdfIn(BaseModel):
+    """A PDF (typically the CV), sent base64-encoded in JSON; its text is extracted server-side and stored like any other file."""
+
+    kind: Literal["case_study", "readme", "cv"]
+    name: str = Field(min_length=1, max_length=80)
+    pdf_base64: str = Field(min_length=20, max_length=7_500_000)  # ~5 MB of PDF
+
+
 class PortfolioProfileIn(BaseModel):
     display_name: str = Field(min_length=1, max_length=80)
     headline: str | None = Field(default=None, max_length=160)

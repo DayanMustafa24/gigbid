@@ -1,7 +1,7 @@
 =====================================================================
 GIGBID  -  LIVE STATE  (update after every considerable chunk of work)
 =====================================================================
-Last updated : 2026-11-15  |  Session 14 (Claude)  |  PHASES 0-6 VERIFIED (246 passed, 1 skipped; ruff clean; /health/ready green live). Only 3.5 open (blocked T5). PHASE 7 (Next.js UI) FULLY WRITTEN, owner has NOT yet run npm install/typecheck/tests/build.
+Last updated : 2026-11-15  |  Session 18 (Claude; audit of S17 tail)  |  PHASES 0-8 written (0-7 verified; 8 awaits CI run). PHASE 9 X2 WRITTEN (unrun), PHASE 10 docs drafted. Open: 3.5 (needs Upwork access), 9.2 (needs official policy text), deployment, owner deliverables.
 Companion    : GIGBID_PLAN.txt (stable plan, stack, roadmap). Read it first.
 
 HOW A NEW LLM SESSION SHOULD START
@@ -43,8 +43,72 @@ AUDIT of starter kit: only placeholders. Missing: gigsim/, data/personas/, job s
  official policy pack, eval.yml, all real code. We build stand-ins (PLAN section 4).
 
 ---------------------------------------------------------------------
-NEXT STEP  (updated session 14b)
+NEXT STEP  (updated session 18)
 ---------------------------------------------------------------------
+ SESSION-20 (2026-11-15 night, audit of previous tail): owner has NO credit card -> Oracle/Railway rejected. Previous session wrote scripts/go_public.ps1 (no Docker, no cloud: starts GigSim + 3 MCP + API + built web on this PC, Cloudflare quick tunnel -> public https URL, fills missing secrets in .env, prints reviewer login; depends on scripts/dev_stack.ps1, present) and scripts/upwork_probe.py (3.5 step 1: OAuth login to https://mcp.upwork.com/mcp, READ-ONLY, writes data/live/upwork_tools.json; Upwork may reject the 127.0.0.1 callback -> then ask mcp-support@upwork.com or stay in assisted mode). marketplace_port.py mode=upwork raises NotImplementedError pointing at assisted mode (consistent). Read from disk: all three files complete, not truncated. 3.5 adapter still NOT written (waits for probe output). Pending owner: run go_public.ps1, test, record video; optionally run the probe and paste data/live/upwork_tools.json summary. Tunnel URL changes per restart and works only while PC is on: assignment wants it live until grades -> use named tunnel/VPS later if needed.
+ SESSION-20b: go_public.ps1 +`-NgrokDomain <name>.ngrok-free.app` (stable free address via ngrok, no card; UNRUN). Owner ran upwork_probe: Upwork side returned 'upstream connect error or disconnect/reset before headers' after login -> 3.5 PARKED (likely Upwork-side/callback approval; ask mcp-support@upwork.com later). Owner's own-portfolio import = future feature (needs real CV/case studies). Owner is recording the video.
+ SESSION-19b (owner results): ruff clean, pytest 269 passed; failure_taxonomy = 13 failures (12 missed fit bids, 1 missed injected) -> docs/FAILURE_TAXONOMY.md written (its 'Reading' section still generic); REPORT.pdf built = 2 pages (<=10 ok).
+  R&D-A/R&D-C real runs ABANDONED by owner (Groq daily TPD quota; no time) -> REPORT s3 'PENDING' and s5 'not valid' stay as honest gaps.
+  DEPLOY: infra/docker-compose.yml + `caddy` service (80/443, DOMAIN env) and infra/Caddyfile (web at DOMAIN, Phoenix at phoenix.DOMAIN; sslip.io hostname); api/web/phoenix ports now bound to 127.0.0.1. UNRUN. Owner sets DOMAIN + COOKIE_SECURE=true in server .env.
+  PHASE 3.5: official Upwork MCP = https://mcp.upwork.com/mcp (OAuth 2.1, no API keys); agent/upwork_live.py NOT written; owner to confirm login works first (T5).
+  Sidebar 'same page' report: Shell.tsx Link routing is correct; likely a shared error/loading fallback (API down/not logged in). Owner to check URL + page heading.
+ SESSION-19 UPDATE (2026-11-15 evening): owner pasted R&D-A + R&D-C tables. AUDIT: R&D-A table = OFFLINE oracle plumbing (all 1.0, labelled 'NOT a result') -> REPORT s3 stays PENDING (no real run yet).
+  R&D-C table is IDENTICAL to the old invalid one (rdc_architectures.json generated 19:53, no error_msgs) -> REPORT s5 stays 'not a valid comparison'; nothing rewritten (no invented numbers).
+  Owner reports 'giving up on it' printing = Groq quota (Retry-After > 20s). Both rdc models + writer are on the same Groq key. agent/llm.py: give-up line now prints the first 160 chars of the 429 body (names TPD/TPM/RPD).
+  PHASE 9/10 STATUS: files complete. NOT yet produced: docs/FAILURE_TAXONOMY.md (needs no LLM: 7 hand_graph + ~2 ci_smoke + x2 excluded rows >= 10), docs/REPORT.pdf, real R&D-A + R&D-C results (blocked by Groq quota reset).
+  OWNER NEXT: scripts.failure_taxonomy ; uv sync --extra data ; scripts.build_report ; after Groq reset: rda_tools (--node analyst if tight) then rdc_architectures --sample 12/24.
+ SESSION-18b UPDATE (2026-11-15): owner ran ruff (clean) + pytest: 264 passed, 1 failed (test_rdc bad-output errors assertion: the runner now records the exception message) -> test FIXED (startswith).
+  R&D-C re-run HUNG (no CPU) => cause = my first backoff (Retry-After capped at 30s but retried 4x per call; a daily quota gives huge Retry-After). FIXED agent/llm.py: retry only when Retry-After <= 20s (max 3 tries), else fail fast.
+   rdc runner now prints one progress line per job/arch. If calls still fail with 429/413, Groq daily token quota is likely exhausted: wait for reset or switch rdc_single/rdc_supervisor models in config.
+  R&D-A (3.7) WRITTEN, UNRUN: evals/runners/rda_tools.py (40 tasks x 4 arms fine/coarse/terse/best, tool-surface from tests/contract/snapshots/tool_schemas.json, aborts after 5 consecutive failed calls),
+   agent/prompts/rda_tool_choice.md, tests/unit/test_rda_tools.py (4), Makefile `rda`. Writes evals/results/rda_tool_granularity{.json,_table.md}. After the run AI writes REPORT section 3 + docs/TOOLS.md note.
+  Phoenix public trace links: deferred to deployment (expose Phoenix via Caddy, run the 4 scenarios, copy trace URLs). Section 10 of REPORT = instructor's hidden-run numbers, filled after the deadline.
+ SESSION-18 UPDATE (2026-11-15) = AUDIT OF THE S17 TAIL (the chat hit its limit after writing these; read from disk, none truncated):
+  PRESENT + COMPLETE: evals/runners/rdc_architectures.py (records error_msgs per job), scripts/failure_taxonomy.py (-> docs/FAILURE_TAXONOMY.md, NOT yet generated), docs/REPORT.md (10 sections),
+   docs/WRITEUP.md, docs/RESUME_BULLETS.md, mcp_servers/portfolio/README.md, scripts/build_report.py (REPORT.md -> docs/REPORT.pdf with reportlab; NOT yet run; prints page count, limit 10).
+  OWNER RESULTS RECORDED: X2 (n=56/arm, 0.8393 vs 0.7679, z=0.9513, p=0.3414, 8 excluded); R&D-C: hand_graph acc 0.8542 F1 0.8679 scam 0.0 failure 0.0 p95 5.76s; supervisor 94% and single_agent 98% FAILURE (0-2.6 steps, ~0.2s) => INVALID comparison.
+  DIAGNOSIS: instant failures after 0 steps = every LLM call raised (LLMUnavailable). Most likely Groq 429 rate limits (supervisor makes up to 14 growing calls/job, 3 archs interleaved); HttpBackend had NO retry.
+   FIX (agent/llm.py): HttpBackend retries 429/500/502/503/504 up to 4x with Retry-After (cap 30s) / exponential backoff. UNRUN. If the re-run still fails, the table JSON now carries rows[].error_msgs (first 2 per job) -> read them.
+  POLICY UPDATE 9.2: owner decision = assume no change; the stand-in (+2 Connects, ai_disclosure) stays, labelled invented (REPORT section 6). Phase 9.2 CLOSED on that basis.
+  DEPLOYMENT: owner accepts Oracle Always Free (or paid VPS if it fails); future personal Upwork use matters more than marks. Steps given in chat (compose + Caddy). Not a repo change.
+  OWNER NEXT: uv run ruff check . --fix ; uv run pytest -q ; uv run python -m evals.runners.rdc_architectures --sample 24 (re-run; paste table + any error_msgs) ;
+   uv run python -m scripts.failure_taxonomy ; uv sync --extra data ; uv run python -m scripts.build_report (need <=10 pages). Then AI rewrites REPORT section 5 + WRITEUP from the new table.
+  STILL OWNER-ONLY: GIF + demo video, 3 public trace links (Phoenix), reviewer login in submission comment, R&D-A (tool granularity, 40 tasks, not run), judge kappa L1, 3.5 live Upwork (T5), hidden-run section 10.
+ SESSION-17 UPDATE (2026-11-15) = PHASE 9 + PHASE 10 DRAFT (UNRUN unless stated):
+  OWNER VERIFIED since 16: ruff clean; check_repo_rules found 2 violations (fixed below); ci_smoke ran with REAL models: evals/results/ci_smoke_table.md = acc 0.9333, F1 0.95, scam_bid 0.0, raw_unsup 0.05, final_unsup 0.0, verified 1.0, p95 13.53s (n=30, seed 42).
+  FIXED: tests/unit/test_marketplace_server.py fake key built at runtime; docs/RD_B_hypothesis.md no longer cites a results glob; ci_smoke.py +--deterministic flag and mode line (real-model run is silent until done).
+  PHASE 9.1 X2: strategy registry (config `strategies`), hash assignment (writer.pick_strategy), outcome-by-strategy (MemoryStore.strategy_table) and stats.two_proportion_z already existed. ADDED: apps/api/routers/analytics.py
+   strategy_experiment() + `experiment` key in GET /analytics/summary (response is dict[str, Any]: openapi.json unchanged); evals/runners/x2_experiment.py (shipped graph on dev bid-jobs -> gigsim_local client model -> z-test; refuses without a model key;
+   writes x2_experiment.json + x2_experiment_table.md); tests/unit/test_x2_experiment.py (4); Makefile `x2`; docs/EXTENSION.md written. NOT YET: UI display of `experiment` (API only), a measured result (owner runs `make x2`).
+  PHASE 9.2 policy update: STAND-IN only (gigsim_local/policy_update.yaml +2 Connects, ai_disclosure). BLOCKED on B2 (official 2 Nov text from instructor). When it arrives: edit rules.yaml/config.yaml/policy_update.yaml, record files/lines/minutes in docs/RUNBOOK.md for the report.
+  PHASE 10 drafted: README.md rewritten (architecture, run, results quoted ONLY from existing files ci_smoke_table.md / rag_eval_table.md / rag_verify_eval.json; empty cells listed as pending), docs/AI_USAGE.md (8 real incidents from this log; owner confirms/edits), docs/VIVA_PREP.md.
+   STILL TO DO: R&D report PDF (<=10 pages), failure taxonomy (>=10 jobs; source rows in ci_smoke.json / rdc results), write-up 1200-1800 words, resume bullets, demo GIF/video, 3 trace links, `make rdc` + R&D-A results, judge kappa (L1).
+  DEPLOYMENT DECISION (open): assignment says keep live until grades are released + hidden test run after deadline (downtime loses E marks). Railway free credit will not cover 8+ services for that long; recommended: one free/cheap VM + compose + Caddy (Oracle Always Free or ~$5 VPS).
+  .env keys LANGSMITH/LANGFUSE/OPENROUTER/OPENAI are NOT required (Phoenix chosen; paid profile empty). TOKEN_ENCRYPTION_KEY: `uv run python -c ...` (cryptography only exists in the venv).
+  OWNER NEXT: uv run ruff check . --fix ; uv run pytest -q (expect 265) ; uv run python -m scripts.check_repo_rules ; make x2 (or uv run python -m evals.runners.x2_experiment) ; make rdc ; push to GitHub and read the Actions run.
+ SESSION-16 UPDATE (2026-11-15) = PHASE 8 WRITTEN (all UNRUN except where stated). Synchronised with the Phase-8 chat sessions:
+  OWNER VERIFIED: ruff clean; pytest 261 passed, 1 skipped; export_openapi ok (62265 bytes); apps/web npm install/typecheck/tests were run (node_modules, .next, playwright-report exist).
+  preflight (owner's .env): 4 blocking (APP_SECRET_KEY, TOKEN_ENCRYPTION_KEY, MCP_BEARER_TOKEN, REVIEWER_EMAIL/PASSWORD unset) + warnings. GROQ_API_KEY ok. Owner fills these.
+  WRITTEN: .dockerignore; infra/docker/{python.Dockerfile (uv --extra obs), web.Dockerfile, postgres-init.sql, README.md}; infra/docker-compose.yml (postgres+pgvector, redis, phoenix, optional ollama profile,
+   gigsim, 3 MCP servers, api (alembic upgrade then uvicorn), worker, web; healthchecks; CHECKPOINTER=postgres; APP_DATABASE_URL postgresql+psycopg; TRACING forced "on" inside compose);
+   agent/observability/tracing.py (Phoenix, no-op without PHOENIX_COLLECTOR_ENDPOINT or with TRACING=off) + llm.chat spans in agent/llm.py + setup_tracing() in apps/api/container.py;
+   scripts/{preflight,check_repo_rules,postgres_smoke}.py; evals/runners/ci_smoke.py (30-job gate from config ci_gates; deterministic if no GROQ key, labelled);
+   apps/web/tests/live/smoke.spec.ts + playwright `live` project + `npm run test:live`; /health/ready honours CHECKPOINTER env; next.config.mjs outputFileTracingRoot.
+   THIS SESSION: .github/workflows/ci.yml (python, postgres, web, compose-smoke jobs) and eval.yml (30-job smoke) [written by the previous chat, reviewed now: consistent with compose and Makefile];
+   Makefile targets preflight/up/down/demo/pg-smoke/repo-rules/ci-smoke/smoke-live; docs/RUNBOOK.md (services, start, degraded mode, rate limits, scout-interval justification, recovery, checks);
+   .env.example (+POSTGRES_PASSWORD, PHOENIX_PROJECT_NAME, TRACING; asyncpg note -> psycopg); apps/api/db.py docstring asyncpg -> psycopg.
+  DECISION: no local Docker install (earlier install failed, C: is full). The compose stack is verified by the GitHub Actions `compose-smoke` job; the owner pushes and reads that run.
+  UNVERIFIED (expect first-run fixes): compose stack, Dockerfiles, Postgres path (scripts.postgres_smoke), tracing against Phoenix, live Playwright smoke, ci_smoke, check_repo_rules. Phoenix image tag is `latest` (pin after first good run).
+  OWNER NEXT: see the end of the Session-16 chat reply: fill .env, run `uv run python -m scripts.check_repo_rules`, `uv run python -m evals.runners.ci_smoke --sample 30`, git push, read the Actions run.
+  NEXT (AI): fix whatever CI/the owner reports; final docs/report (README, AI_USAGE.md, EXTENSION.md, demo notes). Phase 9 experiments (X2 strategies) and 3.5 live Upwork remain as noted earlier.
+ SESSION-15 UPDATE (2026-11-15, closes the two 'still open' items of 14b; UNRUN; Phase 8 is next):
+  1. PER-CATEGORY REPLY/WIN: outcomes table has a `category` column (auto-ALTERed on old DBs); MemoryStore.record_outcome(..., category=) + category_table(owner, persona=None);
+     RunService.sync_outcomes passes job.category; GET /analytics/summary by_category rows gain outcomes/replied/won; UI table shows raw rate (k/n) or '-' (no estimates).
+     Outcomes recorded before this change show as 'uncategorised'. (The 14b 'still open' note below is now closed.)
+  2. PDF UPLOAD: POST /portfolio/pdf (JSON base64, <=5 MB, <=60 pages, pypdf text only, no OCR; encrypted/scanned/non-PDF -> 422 portfolio_pdf); apps/api/portfolio.pdf_to_text;
+     schema PortfolioPdfIn; Settings UI accepts .pdf. tests/unit/test_outcome_category_pdf.py (6).
+  OWNER NEXT: uv run python -m scripts.export_openapi ; uv run ruff check . --fix ; uv run pytest -q ; cd apps\web ; npm run typecheck ; npm run test:unit.
+  NEXT (AI): Phase 8 (Docker Compose, Dockerfiles api/worker/web, CI ci.yml/eval.yml, Postgres smoke, RUNBOOK, live-stack Playwright smoke).
  SESSION-14b UPDATE (2026-11-15, gap fixes; ALL UNRUN):
   Assignment text confirms these were REQUIRED (studio: 'regenerate one paragraph'; journey step 1: 'uploads a portfolio'; pipeline columns incl. viewed/lost; outcome memory per job category). Done:
    1. Pipeline columns now Submitted|Viewed|Replied|Interview|Hired|Lost (+Awaiting approval); Viewed stays empty until the marketplace emits it (stated in UI).

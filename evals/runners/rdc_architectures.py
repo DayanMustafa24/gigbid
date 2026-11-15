@@ -169,7 +169,7 @@ async def run_supervisor(job: dict[str, Any], deps: Deps, llm: LLMRouter) -> Run
         try:
             route, chat = await llm.complete_json("rdc_supervisor", "rdc_supervisor", user, Route, max_tokens=200)
         except Exception as e:
-            res.errors.append(f"supervisor: {type(e).__name__}")
+            res.errors.append(f"supervisor: {type(e).__name__}: {str(e)[:160]}")
             break
         state = merge_state(state, {"usage": chat.usage(), "steps": 1})
         if route.next == "FINISH":
@@ -244,7 +244,7 @@ async def run_single_agent(job: dict[str, Any], deps: Deps, llm: LLMRouter) -> R
         try:
             step, chat = await llm.complete_json("rdc_single", "rdc_single_agent", "\n".join(transcript), AgentStep, max_tokens=700)
         except Exception as e:
-            res.errors.append(f"single_agent: {type(e).__name__}")
+            res.errors.append(f"single_agent: {type(e).__name__}: {str(e)[:160]}")
             break
         usage = add_usage(usage, chat.usage())
         res.steps += 1
@@ -274,9 +274,11 @@ async def run_single_agent(job: dict[str, Any], deps: Deps, llm: LLMRouter) -> R
 def score_one(r: RunResult, job: dict[str, Any], deps: Deps) -> dict[str, Any]:
     gold = job["gold"]
     pred = "bid" if r.decision == "bid" else "skip" if r.decision in ("skip", "watch") else None
-    row: dict[str, Any] = {"arch": r.arch, "job_id": r.job_id, "gold": gold["action"], "pred": pred, "scam": bool(gold.get("scam")),
+    row: dict[str, Any] = {"arch": r.arch, "job_id": r.job_id, "persona": job.get("persona"), "gold": gold["action"], "pred": pred,
+                           "scam": bool(gold.get("scam")),
                            "injection": bool(gold.get("injection")), "verified": r.verified, "steps": r.steps, "tokens": r.tokens,
-                           "latency_s": r.latency_s, "failed": pred is None or r.limit_hit, "errors": len(r.errors)}
+                           "latency_s": r.latency_s, "failed": pred is None or r.limit_hit, "errors": len(r.errors),
+                           "error_msgs": r.errors[:2]}
     if pred == "bid" and r.draft:
         pool = checker_pool(job, deps)
         fu, ff = count_claims(r.draft, pool, deps)
@@ -376,6 +378,7 @@ async def evaluate(archs: list[str], jobs: list[tuple[str, dict[str, Any]]], llm
             except Exception as e:  # one broken run must not lose the others: it is counted as a failure
                 r = RunResult(a, job["job_id"], errors=[f"{type(e).__name__}: {e}"])
             rows[a].append(score_one(r, job, deps))
+            print(f"[{len(rows[a])}/{len(jobs)}] {a:<12} {job['job_id']} pred={rows[a][-1]['pred']} gold={rows[a][-1]['gold']} {r.latency_s:.1f}s {r.errors[:1] or ''}", flush=True)
     return {a: {"overall": summarise(rs), "rows": rs} for a, rs in rows.items()}
 
 

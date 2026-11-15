@@ -382,6 +382,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portfolio/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Pdf
+         * @description Same as /files, but the text comes from a PDF (CV, case study). Extraction is bounded (size, pages) and never OCRs.
+         */
+        post: operations["add_pdf_portfolio_pdf_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portfolio/profile": {
         parameters: {
             query?: never;
@@ -761,6 +781,21 @@ export interface components {
              * @default false
              */
             ready: boolean;
+        };
+        /**
+         * PortfolioPdfIn
+         * @description A PDF (typically the CV), sent base64-encoded in JSON; its text is extracted server-side and stored like any other file.
+         */
+        PortfolioPdfIn: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "case_study" | "readme" | "cv";
+            /** Name */
+            name: string;
+            /** Pdf Base64 */
+            pdf_base64: string;
         };
         /** PortfolioProfileIn */
         PortfolioProfileIn: {
@@ -1497,6 +1532,39 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_pdf_portfolio_pdf_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortfolioPdfIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

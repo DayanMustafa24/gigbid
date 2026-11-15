@@ -8,6 +8,9 @@ Anything written invalidates the cached corpus so the next run re-indexes (the e
 """
 from __future__ import annotations
 
+import base64
+import binascii
+import io
 import json
 import re
 import shutil
@@ -18,6 +21,9 @@ from agent.runtime import ROOT, USER_PERSONAS, user_persona_id
 
 MAX_FILES = 200
 MAX_TOTAL_CHARS = 2_000_000
+MAX_PDF_BYTES = 5_000_000
+MAX_PDF_PAGES = 60
+MIN_TEXT_CHARS = 20
 _SLUG = re.compile(r"[^a-z0-9]+")
 
 
@@ -27,6 +33,32 @@ def slugify(name: str) -> str:
 
 def base_dir(owner: str) -> Path:
     return ROOT / USER_PERSONAS / user_persona_id(owner)
+
+
+def pdf_to_text(pdf_base64: str) -> str:
+    """Text of an uploaded PDF (pypdf; no OCR). Raises ValueError with a user-readable reason: bad data, too big, encrypted, or no text layer."""
+    try:
+        data = base64.b64decode(pdf_base64, validate=True)
+    except (binascii.Error, ValueError) as e:
+        raise ValueError("the file is not valid base64 PDF data") from e
+    if len(data) > MAX_PDF_BYTES:
+        raise ValueError(f"PDF is larger than {MAX_PDF_BYTES // 1_000_000} MB")
+    if not data.startswith(b"%PDF-"):
+        raise ValueError("the file is not a PDF")
+    from pypdf import PdfReader
+    from pypdf.errors import PyPdfError
+    try:
+        reader = PdfReader(io.BytesIO(data))
+        if reader.is_encrypted:
+            raise ValueError("the PDF is password-protected; remove the password and upload it again")
+        if len(reader.pages) > MAX_PDF_PAGES:
+            raise ValueError(f"PDF has more than {MAX_PDF_PAGES} pages")
+        text = "\n\n".join((page.extract_text() or "").strip() for page in reader.pages).strip()
+    except PyPdfError as e:
+        raise ValueError("the PDF could not be read") from e
+    if len(text) < MIN_TEXT_CHARS:
+        raise ValueError("no text found in the PDF (a scanned image?); export a text PDF or upload Markdown")
+    return text
 
 
 def _target(base: Path, kind: str, name: str) -> Path:

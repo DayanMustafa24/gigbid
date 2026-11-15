@@ -190,5 +190,7 @@ def get_marketplace(mode: str | None = None) -> MarketplacePort:
         limit = load_config()["marketplace"].get("max_requests_per_minute")
         return GigSimAdapter(s.gigsim_base_url, s.gigsim_api_token or None, max_requests_per_minute=limit)
     if mode == "upwork":
-        raise NotImplementedError("live Upwork adapter arrives in Phase 3.5 (official Upwork MCP, OAuth 2.1)")
+        raise NotImplementedError(
+            "live Upwork adapter is not connected (Phase 3.5): the official Upwork MCP needs an Upwork-approved OAuth callback and its tools are "
+            "discovered at runtime (scripts/upwork_probe.py). Until then use ASSISTED mode: paste a job into GigBid, approve the draft, copy it into Upwork yourself.")
     raise ValueError(f"unknown marketplace mode {mode!r}; expected 'gigsim' or 'upwork'")

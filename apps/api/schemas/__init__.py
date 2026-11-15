@@ -11,6 +11,7 @@ from .models import (
     PersonaOut,
     PortfolioFileIn,
     PortfolioOut,
+    PortfolioPdfIn,
     PortfolioProfileIn,
     RegenerateIn,
     RegenerateOut,
@@ -23,4 +24,4 @@ from .models import (
 )
 
 __all__ = ["EMAIL", "Credentials", "DecisionIn", "EventOut", "ForgetIn", "JobInline", "PersonaOut", "PortfolioFileIn", "PortfolioOut",
-           "PortfolioProfileIn", "RegenerateIn", "RegenerateOut", "RegisterIn", "RunCreate", "RunOut", "SettingsIn", "Skill", "UserOut"]
+           "PortfolioPdfIn", "PortfolioProfileIn", "RegenerateIn", "RegenerateOut", "RegisterIn", "RunCreate", "RunOut", "SettingsIn", "Skill", "UserOut"]

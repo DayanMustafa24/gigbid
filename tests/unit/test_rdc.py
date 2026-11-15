@@ -95,7 +95,7 @@ async def test_single_agent_step_limit_and_bad_output_are_failures_not_crashes()
     loop = await run_single_agent(job(), deps(), router(lambda nm, s, u: json.dumps({"action": "tool", "tool": "risk_check", "args": {}})))
     assert loop.limit_hit and loop.decision is None and loop.steps == 12
     bad = await run_single_agent(job(), deps(), router(lambda nm, s, u: "not json"))
-    assert bad.decision is None and bad.errors == ["single_agent: StructuredOutputError"]
+    assert bad.decision is None and len(bad.errors) == 1 and bad.errors[0].startswith("single_agent: StructuredOutputError")
 
 
 async def test_supervisor_runs_workers_in_llm_order_and_verifies_after_the_last_draft():

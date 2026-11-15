@@ -76,6 +76,9 @@ class Container:
     async def startup(self) -> None:
         if self.settings.app_env != "test":
             load_env()  # provider keys / MCP token from .env -> os.environ (models, Prompt Guard, MCP client read them there)
+            from agent.observability.tracing import setup_tracing
+
+            setup_tracing()  # Phoenix/OpenTelemetry; no-op without PHOENIX_COLLECTOR_ENDPOINT
         check_secret(self.settings.app_secret_key, self.settings.app_env)
         self.engine = make_engine(self.db_url)
         await create_all(self.engine)

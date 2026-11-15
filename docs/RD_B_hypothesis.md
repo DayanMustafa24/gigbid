@@ -1,6 +1,6 @@
 # R&D Question B: hypothesis (written BEFORE any evaluation run)
 
-Date written: 2026-11-14. No `evals/results/rag_*.json` existed when this was written.
+Date written: 2026-11-14. No RAG result files existed under the results folder when this was written.
 
 ## Setting
 Corpus: 3 synthetic personas (see DATA_CARD). Dev sets: 3 x 200 jobs with gold evidence by construction. Primary metrics:

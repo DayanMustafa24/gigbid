@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
       <Async state={state} what="Loading analytics">
         {(a) => {
           const max = Math.max(1, a.funnel.analysed);
-          const cats = (a as Analytics & { by_category?: Record<string, { analysed: number; bid: number; submitted: number }> }).by_category ?? {};
+          const cats = (a as Analytics & { by_category?: Record<string, { analysed: number; bid: number; submitted: number; outcomes?: number; replied?: number; won?: number }> }).by_category ?? {};
           return (
             <>
               <section className="card stack" aria-label="Funnel">
@@ -59,15 +59,17 @@ export default function AnalyticsPage() {
                   <h2>By job category</h2>
                   <div style={{ overflowX: "auto" }}>
                     <table aria-label="Funnel by category">
-                      <thead><tr><th>Category</th><th>Analysed</th><th>Worth bidding</th><th>Submitted</th></tr></thead>
+                      <thead><tr><th>Category</th><th>Analysed</th><th>Worth bidding</th><th>Submitted</th><th>Reply rate</th><th>Win rate</th></tr></thead>
                       <tbody>{Object.entries(cats).sort((x, y) => y[1].analysed - x[1].analysed).map(([k, v]) => (
-                        <tr key={k}><th scope="row">{k === "uncategorised" ? "Uncategorised (pasted jobs)" : k}</th><td>{v.analysed}</td><td>{v.bid}</td><td>{v.submitted}</td></tr>
+                        <tr key={k}><th scope="row">{k === "uncategorised" ? "Uncategorised (pasted jobs)" : k}</th><td>{v.analysed}</td><td>{v.bid}</td><td>{v.submitted}</td>
+                          <td>{v.outcomes ? `${Math.round(((v.replied ?? 0) / v.outcomes) * 100)}% (${v.replied ?? 0}/${v.outcomes})` : "–"}</td>
+                          <td>{v.outcomes ? `${Math.round(((v.won ?? 0) / v.outcomes) * 100)}% (${v.won ?? 0}/${v.outcomes})` : "–"}</td></tr>
                       ))}</tbody>
                     </table>
                   </div>
                 </section>
               ) : null}
-              <p className="small muted">Reply and win rates per category appear once submitted proposals have marketplace outcomes; until then they are not shown rather than guessed.</p>
+              <p className="small muted">Reply and win rates are raw counts of marketplace outcomes (replied or won out of proposals with an outcome); “–” means none recorded yet. Small samples are noisy.</p>
             </>
           );
         }}

@@ -10,6 +10,7 @@ from typing import Any
 from sqlalchemy import select
 
 from agent.marketplace_port import MarketplaceError
+from agent.settings import marketplace_mode
 from apps.api.container import Container
 from apps.api.db import User, UserSetting
 from apps.api.errors import ApiError
@@ -31,6 +32,8 @@ async def scout_user(c: Container, svc: RunService, owner: str, prefs: dict[str,
     """Search the marketplace for the user's saved queries, start bid runs for jobs not seen before (capped per pass)."""
     persona, queries = prefs.get("default_persona"), [q for q in prefs.get("scout_queries", []) if q]
     out: dict[str, Any] = {"owner": owner, "found": 0, "started": [], "errors": 0}
+    if marketplace_mode(c.cfg) == "upwork":  # Upwork MCP terms: the agent must not rank/pick jobs or poll on a loop; the human chooses what to analyse
+        return {**out, "skipped": "live Upwork mode: no automatic scouting (the human picks jobs to analyse)"}
     if not persona or not queries or c.market is None:
         return {**out, "skipped": "needs a default persona, saved queries and a marketplace"}
     wcfg = c.cfg.get("worker", {})

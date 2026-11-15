@@ -20,5 +20,6 @@ def learn_from_run(store: MemoryStore, owner: str, state: dict[str, Any]) -> dic
     return {"recorded": recorded, "promoted": store.promote_style(owner, persona) if recorded else []}
 
 
-def learn_outcome(store: MemoryStore, owner: str, persona: str, proposal_key: str, strategy: str | None, outcome: str) -> None:
-    store.record_outcome(owner, persona, proposal_key, strategy, outcome)
+def learn_outcome(store: MemoryStore, owner: str, persona: str, proposal_key: str, strategy: str | None, outcome: str,
+                  category: str | None = None) -> None:
+    store.record_outcome(owner, persona, proposal_key, strategy, outcome, category=category)

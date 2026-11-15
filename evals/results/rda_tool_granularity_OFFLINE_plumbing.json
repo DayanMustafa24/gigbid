@@ -1,0 +1,1500 @@
+{
+  "generated_at": "2026-11-15T21:09:58",
+  "mode": "offline-oracle-plumbing-only",
+  "node": "rdc_single",
+  "model": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "fallback": "groq/openai/gpt-oss-20b"
+  },
+  "n_tasks": 40,
+  "seconds": 0,
+  "results": {
+    "fine": {
+      "n": 40,
+      "tool_accuracy": 1.0,
+      "arg_accuracy": 1.0,
+      "arg_given_tool": 1.0,
+      "tokens_per_task": 15.0,
+      "errors": 0,
+      "spec_tokens_est": 491
+    },
+    "coarse": {
+      "n": 40,
+      "tool_accuracy": 1.0,
+      "arg_accuracy": 1.0,
+      "arg_given_tool": 1.0,
+      "tokens_per_task": 15.0,
+      "errors": 0,
+      "spec_tokens_est": 209
+    },
+    "terse": {
+      "n": 40,
+      "tool_accuracy": 1.0,
+      "arg_accuracy": 1.0,
+      "arg_given_tool": 1.0,
+      "tokens_per_task": 15.0,
+      "errors": 0,
+      "spec_tokens_est": 364
+    },
+    "best": {
+      "n": 40,
+      "tool_accuracy": 1.0,
+      "arg_accuracy": 1.0,
+      "arg_given_tool": 1.0,
+      "tokens_per_task": 15.0,
+      "errors": 0,
+      "spec_tokens_est": 926
+    }
+  },
+  "rows": {
+    "fine": [
+      {
+        "task": "Find open jobs about Kubernetes operators.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Search for freelance gigs on data pipelines.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Look for jobs that mention LangGraph.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Read the description of job j-2041.",
+        "gold_tool": "get_job_description",
+        "got_tool": "get_job_description",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "What is the budget of job j-3310?",
+        "gold_tool": "get_job_budget",
+        "got_tool": "get_job_budget",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Which skills does job j-1187 require?",
+        "gold_tool": "get_job_skills",
+        "got_tool": "get_job_skills",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "What screening questions does job j-5520 ask?",
+        "gold_tool": "get_job_screening_questions",
+        "got_tool": "get_job_screening_questions",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "What is the rating of client c-908?",
+        "gold_tool": "get_client_rating",
+        "got_tool": "get_client_rating",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Is the payment method of client c-114 verified?",
+        "gold_tool": "get_client_payment_status",
+        "got_tool": "get_client_payment_status",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "How much has client c-642 spent in total?",
+        "gold_tool": "get_client_total_spent",
+        "got_tool": "get_client_total_spent",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "How many Connects do I have left?",
+        "gold_tool": "get_connects_balance",
+        "got_tool": "get_connects_balance",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "What are the current platform rules and the Connects surcharge?",
+        "gold_tool": "get_platform_policy",
+        "got_tool": "get_platform_policy",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "What is the status of proposal p-771?",
+        "gold_tool": "get_proposal",
+        "got_tool": "get_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Show the conversation on proposal p-205.",
+        "gold_tool": "list_messages",
+        "got_tool": "list_messages",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Has proposal p-318 been replied to yet?",
+        "gold_tool": "get_proposal",
+        "got_tool": "get_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "List the messages for proposal p-990.",
+        "gold_tool": "list_messages",
+        "got_tool": "list_messages",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Find a code sample in my repos that shows FastAPI work.",
+        "gold_tool": "search_evidence_code",
+        "got_tool": "search_evidence_code",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Find a client review that praises my communication.",
+        "gold_tool": "search_evidence_reviews",
+        "got_tool": "search_evidence_reviews",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Find a case study showing RAG evaluation.",
+        "gold_tool": "search_evidence_case_studies",
+        "got_tool": "search_evidence_case_studies",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Find code that shows Postgres migrations.",
+        "gold_tool": "search_evidence_code",
+        "got_tool": "search_evidence_code",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Find a review that mentions on-time delivery.",
+        "gold_tool": "search_evidence_reviews",
+        "got_tool": "search_evidence_reviews",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Find a case study about demand forecasting.",
+        "gold_tool": "search_evidence_case_studies",
+        "got_tool": "search_evidence_case_studies",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Open case study cs-07 in full.",
+        "gold_tool": "get_case_study",
+        "got_tool": "get_case_study",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Show me case study cs-12 together with its reviews.",
+        "gold_tool": "get_case_study",
+        "got_tool": "get_case_study",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Which of my declared skills have evidence behind them?",
+        "gold_tool": "list_evidenced_skills",
+        "got_tool": "list_evidenced_skills",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Which declared skills have no evidence, so I must not claim them?",
+        "gold_tool": "list_unevidenced_skills",
+        "got_tool": "list_unevidenced_skills",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "What is my hourly rate?",
+        "gold_tool": "get_hourly_rate",
+        "got_tool": "get_hourly_rate",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "What is the minimum project budget I accept?",
+        "gold_tool": "get_minimum_budget",
+        "got_tool": "get_minimum_budget",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Which slots are free for a 30 minute call between 2026-11-23 and 2026-11-27?",
+        "gold_tool": "get_free_slots",
+        "got_tool": "get_free_slots",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Find free 60 minute slots between 2026-12-01 and 2026-12-03.",
+        "gold_tool": "get_free_slots",
+        "got_tool": "get_free_slots",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "List my current tentative calendar holds.",
+        "gold_tool": "list_holds",
+        "got_tool": "list_holds",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Tentatively hold 2026-11-24T10:00 for the interview on proposal p-771.",
+        "gold_tool": "hold_slot",
+        "got_tool": "hold_slot",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Release hold h-31.",
+        "gold_tool": "release_hold",
+        "got_tool": "release_hold",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Draft an email to anna@example.com with the subject 'Interview times' offering two slots.",
+        "gold_tool": "draft_email",
+        "got_tool": "draft_email",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "List the email drafts for proposal p-205.",
+        "gold_tool": "list_email_drafts",
+        "got_tool": "list_email_drafts",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "I no longer need hold h-9, release it.",
+        "gold_tool": "release_hold",
+        "got_tool": "release_hold",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Save this text as a draft proposal for job j-2041: 'Hello, I can build your pipeline.'",
+        "gold_tool": "create_proposal_draft",
+        "got_tool": "create_proposal_draft",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Preview the cost and policy checks of submitting proposal p-771 without sending it.",
+        "gold_tool": "submit_proposal",
+        "got_tool": "submit_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "Do a dry run of submitting proposal p-205.",
+        "gold_tool": "submit_proposal",
+        "got_tool": "submit_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      },
+      {
+        "task": "The human approved token tok-77. Send 'Thursday 10:00 works for me' on proposal p-318.",
+        "gold_tool": "send_message",
+        "got_tool": "send_message",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "fine",
+        "tokens": 15
+      }
+    ],
+    "coarse": [
+      {
+        "task": "Find open jobs about Kubernetes operators.",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Search for freelance gigs on data pipelines.",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Look for jobs that mention LangGraph.",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Read the description of job j-2041.",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "What is the budget of job j-3310?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Which skills does job j-1187 require?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "What screening questions does job j-5520 ask?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "What is the rating of client c-908?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Is the payment method of client c-114 verified?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "How much has client c-642 spent in total?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "How many Connects do I have left?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "What are the current platform rules and the Connects surcharge?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "What is the status of proposal p-771?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Show the conversation on proposal p-205.",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Has proposal p-318 been replied to yet?",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "List the messages for proposal p-990.",
+        "gold_tool": "marketplace_read",
+        "got_tool": "marketplace_read",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a code sample in my repos that shows FastAPI work.",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a client review that praises my communication.",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a case study showing RAG evaluation.",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Find code that shows Postgres migrations.",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a review that mentions on-time delivery.",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a case study about demand forecasting.",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Open case study cs-07 in full.",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Show me case study cs-12 together with its reviews.",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Which of my declared skills have evidence behind them?",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Which declared skills have no evidence, so I must not claim them?",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "What is my hourly rate?",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "What is the minimum project budget I accept?",
+        "gold_tool": "portfolio",
+        "got_tool": "portfolio",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Which slots are free for a 30 minute call between 2026-11-23 and 2026-11-27?",
+        "gold_tool": "workspace",
+        "got_tool": "workspace",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Find free 60 minute slots between 2026-12-01 and 2026-12-03.",
+        "gold_tool": "workspace",
+        "got_tool": "workspace",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "List my current tentative calendar holds.",
+        "gold_tool": "workspace",
+        "got_tool": "workspace",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Tentatively hold 2026-11-24T10:00 for the interview on proposal p-771.",
+        "gold_tool": "workspace",
+        "got_tool": "workspace",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Release hold h-31.",
+        "gold_tool": "workspace",
+        "got_tool": "workspace",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Draft an email to anna@example.com with the subject 'Interview times' offering two slots.",
+        "gold_tool": "workspace",
+        "got_tool": "workspace",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "List the email drafts for proposal p-205.",
+        "gold_tool": "workspace",
+        "got_tool": "workspace",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "I no longer need hold h-9, release it.",
+        "gold_tool": "workspace",
+        "got_tool": "workspace",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Save this text as a draft proposal for job j-2041: 'Hello, I can build your pipeline.'",
+        "gold_tool": "marketplace_write",
+        "got_tool": "marketplace_write",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Preview the cost and policy checks of submitting proposal p-771 without sending it.",
+        "gold_tool": "marketplace_write",
+        "got_tool": "marketplace_write",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "Do a dry run of submitting proposal p-205.",
+        "gold_tool": "marketplace_write",
+        "got_tool": "marketplace_write",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      },
+      {
+        "task": "The human approved token tok-77. Send 'Thursday 10:00 works for me' on proposal p-318.",
+        "gold_tool": "marketplace_write",
+        "got_tool": "marketplace_write",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "coarse",
+        "tokens": 15
+      }
+    ],
+    "terse": [
+      {
+        "task": "Find open jobs about Kubernetes operators.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Search for freelance gigs on data pipelines.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Look for jobs that mention LangGraph.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Read the description of job j-2041.",
+        "gold_tool": "get_job",
+        "got_tool": "get_job",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "What is the budget of job j-3310?",
+        "gold_tool": "get_job",
+        "got_tool": "get_job",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Which skills does job j-1187 require?",
+        "gold_tool": "get_job",
+        "got_tool": "get_job",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "What screening questions does job j-5520 ask?",
+        "gold_tool": "get_job",
+        "got_tool": "get_job",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "What is the rating of client c-908?",
+        "gold_tool": "get_client_history",
+        "got_tool": "get_client_history",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Is the payment method of client c-114 verified?",
+        "gold_tool": "get_client_history",
+        "got_tool": "get_client_history",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "How much has client c-642 spent in total?",
+        "gold_tool": "get_client_history",
+        "got_tool": "get_client_history",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "How many Connects do I have left?",
+        "gold_tool": "get_connects_balance",
+        "got_tool": "get_connects_balance",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "What are the current platform rules and the Connects surcharge?",
+        "gold_tool": "get_platform_policy",
+        "got_tool": "get_platform_policy",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "What is the status of proposal p-771?",
+        "gold_tool": "get_proposal",
+        "got_tool": "get_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Show the conversation on proposal p-205.",
+        "gold_tool": "list_messages",
+        "got_tool": "list_messages",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Has proposal p-318 been replied to yet?",
+        "gold_tool": "get_proposal",
+        "got_tool": "get_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "List the messages for proposal p-990.",
+        "gold_tool": "list_messages",
+        "got_tool": "list_messages",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a code sample in my repos that shows FastAPI work.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a client review that praises my communication.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a case study showing RAG evaluation.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Find code that shows Postgres migrations.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a review that mentions on-time delivery.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Find a case study about demand forecasting.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Open case study cs-07 in full.",
+        "gold_tool": "get_case_study",
+        "got_tool": "get_case_study",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Show me case study cs-12 together with its reviews.",
+        "gold_tool": "get_case_study",
+        "got_tool": "get_case_study",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Which of my declared skills have evidence behind them?",
+        "gold_tool": "list_skills",
+        "got_tool": "list_skills",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Which declared skills have no evidence, so I must not claim them?",
+        "gold_tool": "list_skills",
+        "got_tool": "list_skills",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "What is my hourly rate?",
+        "gold_tool": "get_profile",
+        "got_tool": "get_profile",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "What is the minimum project budget I accept?",
+        "gold_tool": "get_profile",
+        "got_tool": "get_profile",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Which slots are free for a 30 minute call between 2026-11-23 and 2026-11-27?",
+        "gold_tool": "get_free_slots",
+        "got_tool": "get_free_slots",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Find free 60 minute slots between 2026-12-01 and 2026-12-03.",
+        "gold_tool": "get_free_slots",
+        "got_tool": "get_free_slots",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "List my current tentative calendar holds.",
+        "gold_tool": "list_holds",
+        "got_tool": "list_holds",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Tentatively hold 2026-11-24T10:00 for the interview on proposal p-771.",
+        "gold_tool": "hold_slot",
+        "got_tool": "hold_slot",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Release hold h-31.",
+        "gold_tool": "release_hold",
+        "got_tool": "release_hold",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Draft an email to anna@example.com with the subject 'Interview times' offering two slots.",
+        "gold_tool": "draft_email",
+        "got_tool": "draft_email",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "List the email drafts for proposal p-205.",
+        "gold_tool": "list_email_drafts",
+        "got_tool": "list_email_drafts",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "I no longer need hold h-9, release it.",
+        "gold_tool": "release_hold",
+        "got_tool": "release_hold",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Save this text as a draft proposal for job j-2041: 'Hello, I can build your pipeline.'",
+        "gold_tool": "create_proposal_draft",
+        "got_tool": "create_proposal_draft",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Preview the cost and policy checks of submitting proposal p-771 without sending it.",
+        "gold_tool": "submit_proposal",
+        "got_tool": "submit_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "Do a dry run of submitting proposal p-205.",
+        "gold_tool": "submit_proposal",
+        "got_tool": "submit_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      },
+      {
+        "task": "The human approved token tok-77. Send 'Thursday 10:00 works for me' on proposal p-318.",
+        "gold_tool": "send_message",
+        "got_tool": "send_message",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "terse",
+        "tokens": 15
+      }
+    ],
+    "best": [
+      {
+        "task": "Find open jobs about Kubernetes operators.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Search for freelance gigs on data pipelines.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Look for jobs that mention LangGraph.",
+        "gold_tool": "search_jobs",
+        "got_tool": "search_jobs",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Read the description of job j-2041.",
+        "gold_tool": "get_job",
+        "got_tool": "get_job",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "What is the budget of job j-3310?",
+        "gold_tool": "get_job",
+        "got_tool": "get_job",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Which skills does job j-1187 require?",
+        "gold_tool": "get_job",
+        "got_tool": "get_job",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "What screening questions does job j-5520 ask?",
+        "gold_tool": "get_job",
+        "got_tool": "get_job",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "What is the rating of client c-908?",
+        "gold_tool": "get_client_history",
+        "got_tool": "get_client_history",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Is the payment method of client c-114 verified?",
+        "gold_tool": "get_client_history",
+        "got_tool": "get_client_history",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "How much has client c-642 spent in total?",
+        "gold_tool": "get_client_history",
+        "got_tool": "get_client_history",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "How many Connects do I have left?",
+        "gold_tool": "get_connects_balance",
+        "got_tool": "get_connects_balance",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "What are the current platform rules and the Connects surcharge?",
+        "gold_tool": "get_platform_policy",
+        "got_tool": "get_platform_policy",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "What is the status of proposal p-771?",
+        "gold_tool": "get_proposal",
+        "got_tool": "get_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Show the conversation on proposal p-205.",
+        "gold_tool": "list_messages",
+        "got_tool": "list_messages",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Has proposal p-318 been replied to yet?",
+        "gold_tool": "get_proposal",
+        "got_tool": "get_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "List the messages for proposal p-990.",
+        "gold_tool": "list_messages",
+        "got_tool": "list_messages",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Find a code sample in my repos that shows FastAPI work.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Find a client review that praises my communication.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Find a case study showing RAG evaluation.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Find code that shows Postgres migrations.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Find a review that mentions on-time delivery.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Find a case study about demand forecasting.",
+        "gold_tool": "search_evidence",
+        "got_tool": "search_evidence",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Open case study cs-07 in full.",
+        "gold_tool": "get_case_study",
+        "got_tool": "get_case_study",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Show me case study cs-12 together with its reviews.",
+        "gold_tool": "get_case_study",
+        "got_tool": "get_case_study",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Which of my declared skills have evidence behind them?",
+        "gold_tool": "list_skills",
+        "got_tool": "list_skills",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Which declared skills have no evidence, so I must not claim them?",
+        "gold_tool": "list_skills",
+        "got_tool": "list_skills",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "What is my hourly rate?",
+        "gold_tool": "get_profile",
+        "got_tool": "get_profile",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "What is the minimum project budget I accept?",
+        "gold_tool": "get_profile",
+        "got_tool": "get_profile",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Which slots are free for a 30 minute call between 2026-11-23 and 2026-11-27?",
+        "gold_tool": "get_free_slots",
+        "got_tool": "get_free_slots",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Find free 60 minute slots between 2026-12-01 and 2026-12-03.",
+        "gold_tool": "get_free_slots",
+        "got_tool": "get_free_slots",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "List my current tentative calendar holds.",
+        "gold_tool": "list_holds",
+        "got_tool": "list_holds",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Tentatively hold 2026-11-24T10:00 for the interview on proposal p-771.",
+        "gold_tool": "hold_slot",
+        "got_tool": "hold_slot",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Release hold h-31.",
+        "gold_tool": "release_hold",
+        "got_tool": "release_hold",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Draft an email to anna@example.com with the subject 'Interview times' offering two slots.",
+        "gold_tool": "draft_email",
+        "got_tool": "draft_email",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "List the email drafts for proposal p-205.",
+        "gold_tool": "list_email_drafts",
+        "got_tool": "list_email_drafts",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "I no longer need hold h-9, release it.",
+        "gold_tool": "release_hold",
+        "got_tool": "release_hold",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Save this text as a draft proposal for job j-2041: 'Hello, I can build your pipeline.'",
+        "gold_tool": "create_proposal_draft",
+        "got_tool": "create_proposal_draft",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Preview the cost and policy checks of submitting proposal p-771 without sending it.",
+        "gold_tool": "submit_proposal",
+        "got_tool": "submit_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "Do a dry run of submitting proposal p-205.",
+        "gold_tool": "submit_proposal",
+        "got_tool": "submit_proposal",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      },
+      {
+        "task": "The human approved token tok-77. Send 'Thursday 10:00 works for me' on proposal p-318.",
+        "gold_tool": "send_message",
+        "got_tool": "send_message",
+        "tool_ok": true,
+        "args_ok": true,
+        "arm": "best",
+        "tokens": 15
+      }
+    ]
+  }
+}

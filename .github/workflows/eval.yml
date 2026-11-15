@@ -1,0 +1,28 @@
+name: Eval
+# 30-job smoke of the shipped graph with thresholds from agent/config.yaml `ci_gates`. Dev sets only.
+# Without GROQ_API_KEY the run is deterministic (no LLM) and labelled as such in evals/results/ci_smoke.json.
+on:
+  pull_request:
+    paths: ["agent/**", "rag/**", "evals/**", "mcp_servers/**", "pyproject.toml"]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --extra dev
+      - run: uv run python -m evals.runners.ci_smoke --sample 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-smoke
+          path: evals/results/ci_smoke*

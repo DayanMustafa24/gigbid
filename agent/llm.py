@@ -7,16 +7,19 @@ makes ONE repair attempt, then raises StructuredOutputError (the graph turns tha
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import os
 import re
+import sys
 import time
 from pathlib import Path
 from typing import Any, Protocol, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+from .observability.tracing import set_attrs, span
 from .settings import NodeModel, load_config, node_model
 
 PROMPTS = Path(__file__).resolve().parent / "prompts"
@@ -60,8 +63,10 @@ class ChatBackend(Protocol):
 
 
 class HttpBackend:
-    def __init__(self, timeout: float = 60.0):
+    def __init__(self, timeout: float = 60.0, max_retries: int = 3, max_wait: float = 20.0):
         self.timeout = timeout
+        self.max_retries = max_retries  # 429/5xx are retried with Retry-After backoff (free tiers rate-limit hard)
+        self.max_wait = max_wait
 
     async def chat(self, nm: NodeModel, system: str, user: str, max_tokens: int, json_mode: bool) -> tuple[str, int, int]:
         import httpx
@@ -73,8 +78,24 @@ class HttpBackend:
         }
         if json_mode:
             body["response_format"] = {"type": "json_object"}
+        url = f"{nm.base_url.rstrip('/')}/chat/completions"
         async with httpx.AsyncClient(timeout=self.timeout) as c:
-            r = await c.post(f"{nm.base_url.rstrip('/')}/chat/completions", headers=headers, json=body)
+            for attempt in range(self.max_retries + 1):
+                r = await c.post(url, headers=headers, json=body)
+                if r.status_code not in (429, 500, 502, 503, 504) or attempt == self.max_retries:
+                    break
+                try:
+                    wait = float(r.headers.get("retry-after", ""))
+                except ValueError:
+                    wait = 2.0 * (2**attempt)
+                if wait > self.max_wait:  # quota exhausted, not a blip: fail fast, let the fallback handle it
+                    why = r.text[:160].replace("\n", " ")  # Groq names the limit hit (TPD/TPM/RPD) in the body
+                    print(f"[llm] {nm.model}: HTTP {r.status_code}, Retry-After {wait:.0f}s > cap, giving up: {why}",
+                          file=sys.stderr, flush=True)
+                    break
+                print(f"[llm] {nm.model}: HTTP {r.status_code}, waiting {wait:.0f}s ({attempt + 1}/{self.max_retries})",
+                      file=sys.stderr, flush=True)
+                await asyncio.sleep(max(wait, 0.5))
         r.raise_for_status()
         data = r.json()
         u = data.get("usage") or {}
@@ -124,7 +145,9 @@ class LLMRouter:
         for n, nm in enumerate(self.targets(node)):
             t0 = time.perf_counter()
             try:
-                text, tin, tout = await self.backend.chat(nm, system, user, max_tokens, json_mode)
+                with span("llm.chat", node=node, provider=nm.provider, model=nm.model, prompt_sha=sha, fallback=n > 0) as sp:
+                    text, tin, tout = await self.backend.chat(nm, system, user, max_tokens, json_mode)
+                    set_attrs(sp, tokens_in=tin, tokens_out=tout)
             except Exception as e:  # transport/HTTP errors: try the fallback model
                 last = e
                 continue

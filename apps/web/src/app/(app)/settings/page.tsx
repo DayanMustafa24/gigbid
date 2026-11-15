@@ -99,8 +99,15 @@ function Portfolio() {
     if (!file) return;
     setMsg(null);
     try {
-      const text = await file.text();
-      await api.post("/portfolio/files", { kind, name: file.name.replace(/\.[^.]+$/, ""), text });
+      const name = file.name.replace(/\.[^.]+$/, "");
+      if (/\.pdf$/i.test(file.name) || file.type === "application/pdf") {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        let bin = "";
+        for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        await api.post("/portfolio/pdf", { kind, name, pdf_base64: btoa(bin) });
+      } else {
+        await api.post("/portfolio/files", { kind, name, text: await file.text() });
+      }
       setMsg({ ok: true, text: `${file.name} added. It is indexed on the next run.` });
       pf.reload();
       refresh();
@@ -121,7 +128,7 @@ function Portfolio() {
   return (
     <section className="card stack" aria-label="Your portfolio">
       <h2>Your own portfolio</h2>
-      <p className="small muted">Upload case studies, repo READMEs and your CV as Markdown or text files. Agents may cite only what is here, and every claim is checked against it. It is private to your account.</p>
+      <p className="small muted">Upload case studies, repo READMEs and your CV as Markdown, text or PDF files (PDFs need a text layer; scans are not read). Agents may cite only what is here, and every claim is checked against it. It is private to your account.</p>
       <form className="stack" onSubmit={saveProfile} aria-label="Portfolio profile">
         <div className="grid cols-3">
           <div className="field"><label htmlFor="pf-name">Your name</label><input id="pf-name" required value={p.name} onChange={(e) => setProf({ ...p, name: e.target.value })} /></div>
@@ -134,8 +141,8 @@ function Portfolio() {
       <div className="row">
         <div className="field"><label htmlFor="pf-kind">File type</label>
           <select id="pf-kind" value={kind} onChange={(e) => setKind(e.target.value)}><option value="case_study">Case study</option><option value="readme">Repo README</option><option value="cv">CV</option></select></div>
-        <div className="field"><label htmlFor="pf-file">File (.md or .txt)</label>
-          <input id="pf-file" type="file" accept=".md,.txt,text/markdown,text/plain" onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} /></div>
+        <div className="field"><label htmlFor="pf-file">File (.md, .txt or .pdf)</label>
+          <input id="pf-file" type="file" accept=".md,.txt,.pdf,text/markdown,text/plain,application/pdf" onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} /></div>
       </div>
       {msg ? <div className={`alert ${msg.ok ? "ok" : ""}`} role={msg.ok ? "status" : "alert"}>{msg.text}</div> : null}
       <Async state={pf} what="Loading your portfolio">
@@ -148,7 +155,7 @@ function Portfolio() {
                   <button onClick={() => void remove(f.kind, f.name)} aria-label={`Delete ${f.name}`}>Delete</button></li>
               ))}</ul>
             ) : <Empty title="No files yet" />}
-            <p className="small muted">Select it above under “Portfolio the agents may cite” as {d.persona}. PDFs are not accepted here yet: export your CV as Markdown or text.</p>
+            <p className="small muted">Select it above under “Portfolio the agents may cite” as {d.persona}.</p>
           </>
         )}
       </Async>

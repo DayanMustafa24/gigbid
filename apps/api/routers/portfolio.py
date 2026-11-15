@@ -15,7 +15,7 @@ from ..db import User
 from ..deps import current_user, get_container
 from ..errors import ApiError
 from ..evidence import _corpus
-from ..schemas import PortfolioFileIn, PortfolioOut, PortfolioProfileIn
+from ..schemas import PortfolioFileIn, PortfolioOut, PortfolioPdfIn, PortfolioProfileIn
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -53,6 +53,21 @@ async def add_file(body: PortfolioFileIn, user: User = Depends(current_user), c:
         await asyncio.to_thread(store.save_file, base, body.kind, body.name, body.text)
     except ValueError as e:
         raise ApiError(422, "portfolio_limit", str(e)) from e
+    _changed(user, c)
+    return await asyncio.to_thread(_out, user)
+
+
+@router.post("/pdf", response_model=PortfolioOut, status_code=201)
+async def add_pdf(body: PortfolioPdfIn, user: User = Depends(current_user), c: Container = Depends(get_container)) -> PortfolioOut:
+    """Same as /files, but the text comes from a PDF (CV, case study). Extraction is bounded (size, pages) and never OCRs."""
+    base = store.base_dir(user.id)
+    if not (base / "profile.json").exists():
+        raise ApiError(409, "profile_required", "Save your profile (name and skills) before adding files")
+    try:
+        text = await asyncio.to_thread(store.pdf_to_text, body.pdf_base64)
+        await asyncio.to_thread(store.save_file, base, body.kind, body.name, text[:200_000])
+    except ValueError as e:
+        raise ApiError(422, "portfolio_pdf", str(e)) from e
     _changed(user, c)
     return await asyncio.to_thread(_out, user)
 
