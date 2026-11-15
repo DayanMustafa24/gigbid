@@ -78,7 +78,7 @@ if ($NgrokDomain) {
         Write-Host "ngrok installed. CLOSE this window, open a NEW PowerShell, run:  ngrok config add-authtoken <your token>  then run this script again with -SkipBuild -NgrokDomain $NgrokDomain" -ForegroundColor Yellow
         exit 0
     }
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "ngrok http --url=$NgrokDomain 3000"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "ngrok http --domain=$NgrokDomain 3000"
     Write-Host "Public (stable): https://$NgrokDomain  (first visit shows an ngrok notice page: click Visit Site)" -ForegroundColor Green
 }
 else {

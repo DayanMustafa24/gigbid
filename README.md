@@ -4,6 +4,7 @@ LangGraph agents scout freelance jobs, judge whether they are worth bidding on, 
 messages. **A human approves everything that leaves the system.** Marketplace access goes through one port with two adapters (GigSim simulator,
 official Upwork MCP), switched by config.
 
+LIVE LINK: https://manila-filtrate-enforcer.ngrok-free.dev/
 <!-- TODO(owner): 30-second demo GIF here -->
 
 ## Architecture
