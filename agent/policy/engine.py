@@ -22,6 +22,7 @@ class Rule:
     type: str
     action: str
     patterns: tuple[re.Pattern[str], ...]
+    flag: str = ""  # RiskFlag value raised when this rule matches a job post (used by the Risk Assessor)
 
 
 @dataclass(frozen=True)
@@ -44,22 +45,22 @@ def load_policy(path: str | None = None) -> Policy:
             type=r["type"],
             action=r["action"],
             patterns=tuple(re.compile(x, re.I) for x in r.get("patterns", [])),
+            flag=r.get("flag", ""),
         )
         for r in raw["rules"]
     )
     return Policy(raw["policy_version"], rules, raw.get("costs", {}), raw.get("limits", {}))
 
 
+def matching_rules(text: str, scope: str, policy: Policy | None = None) -> list[Rule]:
+    """Regex rules that apply to `scope` and match `text`."""
+    policy = policy or load_policy()
+    return [r for r in policy.rules if r.type == "regex" and scope in r.applies_to and any(p.search(text) for p in r.patterns)]
+
+
 def scan(text: str, scope: str, policy: Policy | None = None) -> list[PolicyViolation]:
     """Return one violation per matching regex rule that applies to `scope`."""
-    policy = policy or load_policy()
-    out: list[PolicyViolation] = []
-    for rule in policy.rules:
-        if rule.type != "regex" or scope not in rule.applies_to:
-            continue
-        if any(p.search(text) for p in rule.patterns):
-            out.append(PolicyViolation(rule_id=rule.id, message=rule.description, severity=rule.action))
-    return out
+    return [PolicyViolation(rule_id=r.id, message=r.description, severity=r.action) for r in matching_rules(text, scope, policy)]
 
 
 def redact(text: str, policy: Policy | None = None) -> str:

@@ -1,7 +1,7 @@
 =====================================================================
 GIGBID  -  LIVE STATE  (update after every considerable chunk of work)
 =====================================================================
-Last updated : 2026-11-14  |  Session 3 (Claude)  |  Phase: 0, 1 verified by owner (21 tests, ruff clean, build_jobs OK); Phase 2.1+2.2 code written -> owner runs gate, then Phase 3
+Last updated : 2026-11-15  |  Session 14 (Claude)  |  PHASES 0-6 VERIFIED (246 passed, 1 skipped; ruff clean; /health/ready green live). Only 3.5 open (blocked T5). PHASE 7 (Next.js UI) FULLY WRITTEN, owner has NOT yet run npm install/typecheck/tests/build.
 Companion    : GIGBID_PLAN.txt (stable plan, stack, roadmap). Read it first.
 
 HOW A NEW LLM SESSION SHOULD START
@@ -43,8 +43,278 @@ AUDIT of starter kit: only placeholders. Missing: gigsim/, data/personas/, job s
  official policy pack, eval.yml, all real code. We build stand-ins (PLAN section 4).
 
 ---------------------------------------------------------------------
-NEXT STEP  (updated session 3)
+NEXT STEP  (updated session 14b)
 ---------------------------------------------------------------------
+ SESSION-14b UPDATE (2026-11-15, gap fixes; ALL UNRUN):
+  Assignment text confirms these were REQUIRED (studio: 'regenerate one paragraph'; journey step 1: 'uploads a portfolio'; pipeline columns incl. viewed/lost; outcome memory per job category). Done:
+   1. Pipeline columns now Submitted|Viewed|Replied|Interview|Hired|Lost (+Awaiting approval); Viewed stays empty until the marketplace emits it (stated in UI).
+   2. REGENERATE ONE PARAGRAPH: agent/nodes/regenerate.py (LLM rewrite of ONE paragraph, prompt agent/prompts/paragraph.md, then claim verification + policy guard; stateless; returns a CANDIDATE),
+      POST /runs/{id}/regenerate (RegenerateIn/Out in apps/api/schemas; RunService.regenerate; only while awaiting_approval). UI: studio Decide panel -> 'Regenerate a paragraph' loads the
+      candidate into the editor; the human still submits through the normal edit decision (re-checked, bound to the human's text: R4 intact). tests/unit/test_regenerate.py (5), e2e test added.
+   3. PORTFOLIO UPLOAD: apps/api/portfolio.py (SCANNED layout under data/user/personas/user-<id>/, slug-only paths, caps 200 files / 2M chars), routers/portfolio.py
+      (GET /portfolio, PUT /portfolio/profile, POST /portfolio/files, DELETE /portfolio/files/{kind}/{name}; text .md/.txt only, PDF not accepted), agent/runtime.py
+      (user_persona_id, persona_visible, list_personas/persona_dir know user-* dirs), persona privacy enforced in /personas, /personas/{p}/evidence, RunService.persona_ok(persona, owner), PUT /settings.
+      UI: Settings -> 'Your own portfolio'. .gitignore: data/user/. tests/unit/test_portfolio.py (4).
+   4. Analytics: GET /analytics/summary now has by_category (analysed/bid/submitted from the run ledger; summarise() stores job.category); UI table. Per-category REPLY/WIN rates still need
+      outcome memory keyed by category (not built; honest note in UI).
+  OWNER NEXT (PowerShell, D:\gigbid): uv run python -m scripts.export_openapi ; uv run ruff check . --fix ; uv run pytest -q (expect 246 + ~9 new; paste failures) ;
+   THEN cd apps\web ; npm install ; npm run typecheck ; npm run test:unit ; npx playwright install chromium ; npm run test:e2e ; npm run build.
+  RISK TO WATCH: tests that assert the exact shape of summary['job'] or of /personas (new 'category' key; user-* filtering); LangGraph/Playwright selectors never executed.
+  Optional leftover: evals/runners/verify_eval.py was changed earlier to use the live verifier's evidence pool; re-run `uv run python -m evals.runners.verify_eval` before quoting its numbers.
+ SESSION-14 UPDATE (2026-11-15, audit of a session that hit its limit; read from disk, nothing assumed):
+  STATE FILE WAS INTACT (not broken midway). PHASE 7 WEB APP: every planned file is on disk and complete (no truncation found in the files read end/tail):
+   src/app: layout, page (redirect), globals.css, login, (app)/layout (AppProvider+Shell), onboarding, inbox, jobs/[id], studio/[id], pipeline, messages, runs, runs/[id], analytics, settings(+memory).
+   src/components: Shell (+DegradedBanner), States, Badges, EvidenceHover, DraftView, ApprovalPanel, RunTimeline. src/lib: app.tsx, http, types, hooks, claims, evidence, format.
+   tests: unit/claims.spec.ts; e2e/{mock.ts, approve.spec.ts (hover evidence, approve once, reject+reason, edit, refresh-survives), onboarding.spec.ts (3), degraded.spec.ts (4 + 1 @mobile)}.
+   README.md of apps/web rewritten this session (it was the starter placeholder).
+  GAPS REMAINING IN PHASE 7: none blocking; see SESSION-14b (regenerate, upload, pipeline columns, per-category funnel now written). Still open: per-category reply/win rates.
+  UNVERIFIED: no web file has ever been compiled or run. Expect typecheck/test fixes on first run (paste output). schema.d.ts is produced by `npm run gen:api` (needs apps/api/openapi.json, exists).
+  OWNER NEXT (PowerShell): cd D:\gigbid\apps\web ; npm install ; npm run typecheck ; npm run test:unit ; npx playwright install chromium ; npm run test:e2e ; npm run build   (paste any failure; commit src/lib/api/schema.d.ts).
+  NEXT (AI): fix whatever the owner's web run reports; then Phase 8 (Docker Compose + Dockerfiles for api/worker/web, CI ci.yml/eval.yml, Postgres smoke, RUNBOOK scout interval, live-stack Playwright smoke), then final docs/report.
+---------------------------------------------------------------------
+ SESSION-13 UPDATE (2026-11-15):
+  OWNER VERIFIED: export_openapi ok (49539 bytes), ruff clean, 246 passed + 1 skipped, migrations test green, snapshot test green. Live: dev_stack.ps1 + uvicorn ->
+   /health/ready = status ok, marketplace up, models true, injection_classifier true (mode gigsim, sqlite checkpointer). => PHASE 6 DONE.
+  FIXED: /health/ready showed models/injection_classifier false because .env was read only into pydantic Settings, while node_model()/default_llm()/Prompt Guard read os.environ.
+   agent/settings.load_env() (python-dotenv, override=False) is now called in Container.startup() when app_env != 'test' (API + worker). tests/unit/test_load_env.py (2).
+   scripts/dev_stack.ps1 starts GigSim + portfolio/marketplace/workspace MCP servers (needs MCP_BEARER_TOKEN in .env); without them marketplace shows 'down' (expected).
+  PHASE 7 DECISIONS: Next.js 16.4.6 + React 19.3.1 + TS ~5.9.3 (versions install cleanly in sandbox), plain CSS (no Tailwind), same-origin /api rewrite to FastAPI (next.config.mjs,
+   compress:false for SSE, output standalone), client types from generated apps/web/src/lib/api/schema.d.ts (npm run gen:api runs as pre-dev/pre-build/pre-typecheck hook; commit the file),
+   Playwright with projects unit (no browser) / e2e / e2e-mobile; e2e mocks the API at the network layer (deterministic, no backend/keys); live-stack smoke moves to Phase 8.
+   Autonomy is shown honestly as 'human approval required for every spend' (not a selectable level). Inbox ranks by fit from the user's own runs (Analyse button starts a bid run).
+   Pipeline: drafted = pending approvals, other columns from live GET /proposals/{id}; 'viewed' column exists but the marketplace has no such status yet.
+   Messages: 'Suggest reply' = POST /runs kind=conversation, approve in the studio. Preview in studio = exact payload + connects cost (marketplace dry-run happens at submission).
+  BACKEND ADDED FOR PHASE 7 (verified by the green run above): service.summarise now includes risk.explanation, fit.matches/reasons, job_spec{requirements,deliverables,hidden_needs};
+   GET /personas/{persona}/evidence?ids= (apps/api/evidence.py + routers/evidence.py; citable types only, never proposals; tests/unit/test_evidence_lookup.py);
+   SettingsIn + hourly_rate_usd, min_project_budget_usd, weekly_connects_budget (stored only when provided).
+  WRITTEN, UNRUN (apps/web): package.json, tsconfig.json, next.config.mjs, .gitignore, playwright.config.ts, src/lib/{http,types,hooks,claims,format,evidence}.ts.
+   Dirs created: src/app/login, src/app/(app)/jobs/[id]. NOT YET WRITTEN: src/app/globals.css (first write failed: parent dir missing; write_file does not create parents -> create dirs first),
+   layout.tsx, page.tsx (redirect /inbox), login, (app)/layout (Shell + auth guard + degraded banner reading /health/ready), onboarding, inbox, jobs/[id], studio/[id], pipeline, messages,
+   runs (list) + runs/[id], analytics, settings (+memory viewer), components {Shell, States, Badges, EvidenceHover, DraftView, ApprovalPanel (proposal + message), RunTimeline}, tests/unit/claims.spec.ts,
+   tests/e2e/{mock.ts + >=5 specs: onboarding, approve, reject-with-reason, edit draft, degraded banner (+1 @mobile)}.
+  KNOWN GAPS: regenerate-one-paragraph needs a backend endpoint (not built); upload-own-portfolio UI not built (own portfolios load via rag.ingest scanned layout; document it); analytics has no per-category
+   breakdown (API provides per-persona outcomes only); memory item field names not inspected (UI renders generically); Phase 3.5 live Upwork still blocked on T5.
+  OWNER NEXT: nothing required now. After the AI finishes the web app: cd apps/web; npm install; npm run typecheck; npm run test:unit; npx playwright install chromium; npm run test:e2e; npm run build.
+  NEXT (AI): finish Phase 7 in the order of NOT YET WRITTEN above (create dirs first), then Phase 8 (Docker Compose, Dockerfiles, CI ci.yml/eval.yml, Postgres smoke, RUNBOOK scout interval).
+ SESSION-12 UPDATE (2026-11-15, audit after a session that hit its limit; read from disk, none of these files is truncated):
+  UNRECORDED WORK FOUND + VERIFIED CONSISTENT (written 12:30-12:33, UNRUN): the product path now goes THROUGH MCP (R2) and spending writes need a human grant (R4):
+   agent/mcp_marketplace.py (McpMarketplace implements MarketplacePort over McpGateway; each method runs AS a named node per CALLER map; to_port_error maps
+   tool errors -> port exceptions incl. ApprovalRequired/PolicyRejected(rule); build_agent_marketplace(cfg) honours config marketplace.access mcp|direct / env
+   MARKETPLACE_ACCESS; workspace_slots_provider), agent/approvals.py (+text_sha, ApprovalGrant.mint: authority for ONE run, optionally bound to the exact approved text),
+   agent/nodes/common.py (Deps.approval + approval_kwargs: no grant => no token => server refuses = fail closed), gates.executor + conversation_gates.message_sender
+   pass approval_kwargs, MarketplacePort.submit_proposal/send_message take approval_token (adapters ignore it; the MCP server enforces it), apps/api/service.py
+   (grant_for_decision at approve/edit ONLY; grant_from_state for retry of a failed write), container (market=build_agent_marketplace, slots via Workspace MCP),
+   mcp_client.McpToolError.rule, tests/contract/test_mcp_marketplace.py (9). Cross-checked: caller->allowlist mapping, token subjects (proposal_id / message_subject),
+   error code names, test fakes (no existing fake receives approval_token because deps.approval is None outside the API decision path).
+  => Phase 6 item (d) 'approval-token endpoints' is CLOSED BY DESIGN: the decision endpoint is the only approval point; tokens are minted in-process, never issued over HTTP.
+  PHASE 5.9 intact (rdc_architectures.py, prompts, test_rdc.py present; unchanged since session 10). Owner has NOT yet run ruff/pytest for 5.9 + Phase 6 + this MCP path.
+  PHASE 6 REMAINDER DONE THIS SESSION (all UNRUN): (a) layout now matches the assignment tree: apps/api/{streaming.py (SSE bridge, moved out of runs.py), auth/ (sessions.py = old
+   auth.py, token_store.py = Fernet-encrypted OAuth store, model OAuthToken in db.py), schemas/ (models.py = old schemas.py; __init__ re-exports), routers/{jobs,proposals,messages,
+   approvals,_common}.py replacing market.py}. URLs unchanged; NEW endpoint GET /approvals (pending queue, owner-scoped). main.py includes the new routers.
+   (b) docs/ARCHITECTURE.md rewritten (agents, product path via MCP, API+worker). (c) Alembic: alembic.ini, apps/api/migrate.py (sync_url/upgrade/downgrade, CLI), migrations/
+   {env.py, script.py.mako, versions/0001_baseline.py, 0002_oauth_tokens.py}; `make migrate`. 6.3: scripts/gen_ts_client.py + `make ts-client` (needs Node; writes
+   apps/web/src/lib/api/schema.d.ts). Tests added: tests/unit/test_migrations_and_tokens.py (4: migrations == models via compare_metadata, downgrade, token store encrypts/scopes/
+   wrong key, production key rule), test_api.py +2 (approval queue scoped to owner; required route groups present in OpenAPI).
+   RISK TO WATCH: test_migrations_create_exactly_the_model_schema compares reflected SQLite schema with the models; if it reports spurious drift paste it and I adjust the baseline.
+  PHASE 6 STATUS: COMPLETE pending the owner's green run. Not Phase 6: docs/RUNBOOK.md scout-interval justification + Postgres smoke move to Phase 8.
+  OWNER NEXT (PowerShell, D:\gigbid), in order, paste any failure:
+   1. uv sync --extra dev
+   2. uv run ruff check . --fix
+   3. uv run pytest -q          (expect ~195 + 21 API/worker + 11 rdc + 9 mcp_marketplace + 4 migrations/tokens + 2 api; 1 skipped; fixes go to code, not tests)
+   4. uv run python -m scripts.export_openapi   (writes apps/api/openapi.json; commit it)
+   5. uv run python -m apps.api.migrate upgrade (creates data/app DB via Alembic; optional) ; make rdc-offline (plumbing only)
+   6. optional: uv run python -m scripts.gen_ts_client (needs Node) ; uv run uvicorn apps.api.main:app --port 8000 -> /health/ready, /docs
+  NEXT (AI) after green: Phase 7 (Next.js UI: 9 screens, EvidenceHover, ApprovalPanel, RunTimeline, Playwright), then Phase 8 (compose, Dockerfiles, CI eval.yml, Postgres smoke).
+  A7 tool-schema snapshot test WRITTEN: tests/contract/test_tool_schemas.py. FIRST pytest run writes tests/contract/snapshots/tool_schemas.json and reports 1 extra SKIP
+   (expected: COMMIT that file; from then on any tool-signature change fails; intentional change = UPDATE_SNAPSHOTS=1). Run pytest a 2nd time to see it pass. Mid-run note: it
+   builds the 3 servers with throw-away stores (no network).
+ SESSION-11 UPDATE (latest, 2026-11-15) - AUDIT + PHASE 6 COMPLETION:
+  AUDIT (read from disk, nothing assumed): state header was stale (said Session 8, no Phase 6 entry) -> FIXED. All 5.9 + Phase 6 files read end-to-end; none truncated.
+   Owner request 'fix E501 in scripts/smoke_prompt_guard.py' = DONE (lines < 120). Owner request 'proceed through 5.9+ phases' = 5.9 and Phase 6 core were written by the
+   previous session before it hit its limit; both are UNRUN until the owner runs ruff + pytest.
+  PHASE 6 STATE (apps/api = Container, RunService, 6 routers, SSE replay from run_events, scrypt+JWT cookie auth, tenant scoping via current_user only):
+   WRITTEN THIS SESSION: worker/main.py (Arq WorkerSettings: scout / sync_outcomes / recover cron from config `worker:`; own Container; `make worker`),
+   worker/__init__.py, tests/conftest.py (api_harness: real app + temp SQLite + MemorySaver + offline fakes, FakeMarket), tests/integration/test_api.py (16 tests:
+   auth, cookie flags, closed registration, run gate approve/reject/edit, exactly-once decision (409), duplicate start returns same run, SSE replay + Last-Event-ID,
+   retry guard, stale recovery, tenant isolation 404s, 422 shape, marketplace outage 503, trace-id + security headers, forget phrase), tests/integration/test_worker.py (5),
+   scripts/export_openapi.py (+ `make openapi`, `--check` for CI). pyproject: E501 ignored for apps/**, worker/**, scripts/**.
+   NOT DONE (Phase 6 remainder): (a) layout alignment with the assignment tree (apps/api/streaming.py; auth/ and schemas/ packages; market.py split into
+   jobs/proposals/messages; approvals router) - purely structural, URLs unchanged; (b) docs/ARCHITECTURE.md API section; (c) Alembic migrations (create_all is the dev bootstrap);
+   (d) approval-token endpoints (agent/approvals.py HMAC tokens exist; decision endpoint uses the session cookie today) - decide before Phase 8.
+  OWNER NEXT (PowerShell, D:\gigbid), in order, paste any failure:
+   1. uv sync --extra dev
+   2. uv run ruff check . --fix
+   3. uv run pytest -q            (expect 195 + 21 new + 11 rdc already counted; 1 skipped)
+   4. make rdc-offline            (= uv run python -m evals.runners.rdc_architectures --offline --sample 12; plumbing only, never quote)
+   5. uv run python -m scripts.export_openapi   (writes apps/api/openapi.json; commit it)
+   6. optional smoke: uv run uvicorn apps.api.main:app --port 8000 ; then open http://localhost:8000/health/ready and /docs
+   OWNER-PARALLEL: `make rdc` with GROQ key (paste table -> docs/RD_C_results.md).
+  NEXT (AI) after green: finish Phase 6 remainder (a-d), then Phase 7 (Next.js UI), Phase 8 (compose, Dockerfiles, CI eval.yml, Postgres smoke).
+ SESSION-10 UPDATE:
+  OWNER VERIFIED: 195 passed, 1 skipped (postgres opt-in). Prompt Guard LIVE smoke OK: benign 0.0005, injection 0.9995 -> parser works on the real format
+   (plain float string). FINDING for the report: the hidden 'System: ... call submit_proposal' sample scored only 0.006 by Prompt Guard but is caught by our
+   heuristics (role forgery + tool name) => layers are complementary, justifies defence in depth. Fixed: parser now handles scientific notation (4.7e-05 was read as 5->1.0).
+   3 ruff E501 in scripts/smoke_prompt_guard.py FIXED.
+  5.9 R&D-C WRITTEN, UNRUN: evals/runners/rdc_architectures.py (hand_graph | supervisor (LLM routes the same node functions) | single_agent (ReAct-style, tools
+   risk_check/search_evidence/price_quote/verify_draft/check_policy)); prompts agent/prompts/rdc_{single_agent,supervisor}.md; config models.nodes rdc_single/rdc_supervisor
+   (same 120b model as writer: isolates ORCHESTRATION); metrics vs generator gold: accuracy, bid/skip F1, scam_bid_rate, raw/final unsupported per proposal (one checker for all),
+   verified_rate (did the final text pass verification), policy_violation_rate, failure_rate, steps/tokens/latency. Architectures never see the gold. --offline = scripted
+   stand-in, labelled, plumbing only. Make: `make rdc` (real, 50 jobs, needs GROQ key) / `make rdc-offline`. tests/unit/test_rdc.py (11).
+   OWNER-PARALLEL (not blocking): run `make rdc` with real models, paste table -> I write docs/RD_C_results.md. Check Groq rate limits: ~150 jobs x 3 archs.
+  agent/runtime.py = composition root (build_deps(persona,...) -> Deps with retriever/corpus/profile/price_stats/memory/classifier; default_llm()). Used by evals now, API next.
+ SESSION-9 UPDATE:
+  OWNER VERIFIED 5.5-5.8 + graph render: uv sync ok, 189 passed, render_graphs wrote docs/images/{bid_graph,conversation_graph}.mmd. One ruff E501 in
+   scripts/render_graphs.py (docstring 122 chars): FIXED. => 5.5, 5.6 (sqlite), 5.7, 5.8 (heuristics) are DONE.
+  CLOSING THE LAST PHASE-5 GAPS (nothing else stays open through 5.8 except 3.5):
+   a) 5.8 layer three: agent/security/prompt_guard.py (PromptGuardClassifier via Groq chat completions, tolerant score parser, 512-token segmentation,
+      max over segments, build_prompt_guard(cfg) -> None without GROQ_API_KEY) + scripts/smoke_prompt_guard.py + tests/unit/test_prompt_guard.py (6, mocked HTTP).
+      Groq does NOT document the output format -> OWNER runs `uv run python -m scripts.smoke_prompt_guard` and pastes the output (live check of the parser).
+      Wiring into runs happens in the composition root (Phase 6: build Deps with injection_classifier=build_prompt_guard()).
+   b) 5.6 Postgres: test_checkpointing.py is now parametrised sqlite|postgres; postgres is opt-in (GIGBID_TEST_POSTGRES=1 + reachable DATABASE_URL), skipped
+      by default. Cannot run until a Postgres exists (Docker failed): do it at Phase 8 start or earlier if the owner installs Postgres natively. Code path is
+      written; it is UNVERIFIED until then.
+  OWNER NEXT: uv run ruff check . --fix ; uv run pytest -q (expect 189 + 6 prompt-guard + 1 skipped postgres) ; uv run python -m scripts.smoke_prompt_guard
+ SESSION-8d UPDATE: 5.5, 5.6, 5.7, 5.8 and graph rendering written (now VERIFIED, see SESSION-9).
+  5.8 injection defence (R9): agent/security/detector.py (normalise: NFKC + invisible/bidi strip + Cyrillic look-alike fix ONLY in mixed-script words so
+   Russian posts are not damaged; heuristics: role/delimiter forgery, own tool names in a post, AI-directed imperatives, hidden markup, encoded blobs; thresholds
+   in config security.injection), agent/nodes/injection_guard.py (runs after intake, BEFORE the parallel branches: writes the NORMALISED job back, scores,
+   optional classifier hook Deps.injection_classifier; never skips a job), risk_assessor raises prompt_injection on guard level=high, client_liaison uses detector +
+   normalised text. bid_graph: intake -> injection_guard -> fan-out. state.injection. tests/unit/test_security.py (7) + 1 new graph test in test_bid_graph.py.
+   TODO: wire the real Prompt Guard model (config security.injection_classifier) into Deps.injection_classifier (needs GROQ key + API check); heuristics-only today.
+  5.7 budgets/dead-letter: tests/integration/test_budgets.py (4): stop_reason order, conversation_stop_reason, step-budget dead-letter before expensive nodes,
+   critic loop capped at max_revisions and human told (needs_attention). No production code change was needed (behaviour already implemented in 5.3/5.4).
+  5.6 checkpointing: agent/checkpointing.py open_checkpointer(kind memory|sqlite|postgres) (config `checkpointer:`, env CHECKPOINTER). SQLite API VERIFIED in a
+   scratch venv (restart survival, resume, history). Postgres branch UNTESTED (no Docker): smoke it in Phase 8. pyproject +langgraph-checkpoint-sqlite, +aiosqlite
+   => OWNER MUST RUN `uv sync --extra dev` FIRST. tests/integration/test_checkpointing.py (2): pause -> new saver on same file -> resume once -> replay from gate
+   checkpoint reuses the SAME idempotency keys. FINDING (scratch): replaying an old checkpoint re-uses the recorded resume value; a different decision needs update_state.
+  Graph render: scripts/render_graphs.py + `make graphs` -> docs/images/{bid_graph,conversation_graph}.mmd from the compiled graphs; tests/unit/test_render_graphs.py (2).
+  OWNER NEXT (PowerShell, D:\gigbid), in order:
+   1. uv sync --extra dev
+   2. uv run ruff check . --fix
+   3. uv run pytest -q          (expect ~189: 157 + memory 16 + security 7 + budgets 4 + checkpointing 2 + render 2 + graph 1; paste failures, I fix code not tests)
+   4. uv run python -m scripts.render_graphs   (then commit docs/images/*.mmd)
+  NEXT (AI) after green: 5.9 R&D-C harness (single ReAct agent vs supervisor vs hand graph on the 3x200 dev jobs; metrics: bid/skip F1, unsupported claims,
+   latency, tokens; honest offline/stand-in labelling), then Phase 6 (FastAPI routers, SSE, Arq worker, memory viewer/delete API, approval-token issue).
+   Open elsewhere: Prompt Guard wiring; Postgres checkpointer smoke; real-model RAG run 2; 3.5 live Upwork (blocked T5); instructor assets B1/B2.
+ SESSION-8c UPDATE:
+  OWNER VERIFIED 5.4: ruff clean, test_conversation_graph 6 passed, full suite 157 passed. => 5.4 DONE.
+  5.5 WRITTEN, UNRUN (long-term memory, R7): agent/memory/{promotion_rules.py (pure rules; starter fn kept), stats.py (posterior_rate, two_proportion_z -> X2),
+   store.py (SQLite MemoryStore: style_events, memory_items, outcomes, memory_log; owner-scoped; view/delete/forget_all; tombstones), service.py
+   (learn_from_run, learn_outcome: called by API/worker, NOT inside graphs)}. Rules: style learned ONLY from the human's edits/approvals, fixed-vocabulary
+   rules (shorter/longer/no_exclamations/adds_question) + 'avoid sentence' (sanitised, injection-checked); promoted at >=3 distinct proposals AND >=70% of last 8
+   where testable; unchanged approvals count against; idempotent per proposal; deleted items never return. Outcome memory: measured reply/win rates replace pricing
+   assumptions only after min_samples=20 / min_replies=10, shrunk by Beta prior (10). Wiring: config `memory:`, Deps.memory/owner, intake loads state.memory_context,
+   pricing.quote(..., outcome) uses measured rates (backward compatible), writer already reads memory_context.style. .gitignore data/memory/. tests/unit/test_memory.py (~17).
+  OWNER NEXT (after 5.6-5.8 below are also written): one run of ruff + pytest for everything. See SESSION-8d.
+ SESSION-8b UPDATE:
+  VERIFY-EVAL RE-RUN MEASURED (owner, offline stand-ins hashing-512 + lexical-coverage; 150 proposals/persona): retrieved mode now
+   truthful_claims_kept 0.91/0.83/0.92 (ai_ml/fullstack/data; was 0.65/0.63/0.71), fabrication_recall 1.0 all, fabricated_per_proposal_after 0.0 all,
+   fabrication_precision 0.23/0.13/0.40 (was 0.07/0.07/0.18). Oracle: precision 1.0, recall 1.0, kept 1.0. => retrieval caveat FIXED; precision still
+   low because ~half the flagged `fabricated` are truthful claims whose evidence retrieval missed (end-to-end, offline retriever). Honest reading: the
+   verifier removes every planted fabrication (recall 1.0) at the cost of ~9-17% truthful claims dropped; re-measure with real embedder (run 2).
+   Results file: evals/results/rag_verify_eval.json. Quote these, never `unsupported_after`.
+  5.4 WRITTEN, UNRUN: agent/graphs/conversation_graph.py (load_context -> client_liaison -> message_gate[interrupt approve|edit|dismiss] -> message_sender;
+   conv_dead_letter on budget/empty liaison), agent/nodes/conversation_gates.py, tests/integration/test_conversation_graph.py (6 tests).
+   Other edits: client_liaison.TEMPLATES (rules-mode replies for interview_request/acceptance/rejection only; others left empty for human), Deps.slots
+   (callable, sync or async), state.sent_message. Unsafe messages: no draft, actions = edit|dismiss only; human edits re-checked by policy guard;
+   sender idempotent (key = sha(proposal|text)). Expected tests: 151 + 6 = 157.
+  OWNER NEXT: uv run ruff check . --fix ; uv run pytest -q tests/integration/test_conversation_graph.py ; uv run pytest -q   (paste failures)
+  NEXT (AI) after green: 5.5 memory, then 5.7, 5.8, graph render script, 5.6 SQLite saver, 5.9 (order unchanged below).
+ SESSION-8 UPDATE:
+  OWNER VERIFIED (PowerShell): ruff clean; test_nodes 17 passed; test_bid_graph 6 passed; full suite 151 passed. => 5.1, 5.2, 5.3 are DONE.
+   LangGraph risks flagged earlier (Send join barrier, interrupt/resume, list path-map) are therefore CONFIRMED working on 1.x.
+  5.2 DONE: agent/nodes/{common,analyst,risk_assessor,fit_matcher,decision,pricing,writer,verifier,critic,compliance,scout,client_liaison,gates}.py
+   prompts analyst/writer/critic/liaison.md (risk, pricing, decision, compliance are deterministic; LLM only analyst/writer/critic/liaison, each with
+   deterministic fallback). 5.3 DONE: agent/graphs/bid_graph.py (hand-written, Send fan-out, join, critic loop <= max_revisions, stop_reason -> dead_letter,
+   interrupt() approval gate, idempotent executor). Tests: tests/unit/test_nodes.py, tests/integration/test_bid_graph.py.
+  VERIFY-EVAL CAVEATS (what is fixed / not):
+   - FIXED in code: retrieval queries use problem_hint + industry + skills (was title only); evidence pool for `retrieved` mode = retrieved items + PRIMARY_TYPES
+     siblings of their projects (identical to agent/nodes/verifier.evidence_pool). Session 8 aligned the filter to PRIMARY_TYPES.
+   - NOT YET MEASURED: owner's pasted run (precision 0.07-0.17, truthful_kept 0.63-0.71) predates the sibling-pool edit. RE-RUN REQUIRED:
+     uv run python -m evals.runners.verify_eval   -> quote only after that run.
+   - Quote `fabricated_per_proposal_after` / `fabrication_recall` / `truthful_claims_kept`; NEVER `unsupported_after` (zero by construction).
+   - Even oracle precision 1.0 / fab_after 0.0 is on SYNTHETIC planted fabrications (template-generated): an upper bound, not real-world performance. Say so in report.
+   - Rerank-off decision still PROVISIONAL (lexical stand-in); only Ollama/cross-encoder run 2 settles it. Owner-parallel, does not block.
+  NEXT (AI), in order: 5.4 conversation_graph.py (+prompt use of liaison node, tests) ; 5.5 memory (promotion_rules, style+outcome memory store, tests) ;
+   5.7 budget/dead-letter tests ; 5.8 injection detector node (agent/security/detector.py, wire into intake) ; graph render script (mermaid/PNG) ;
+   5.6 SQLite/in-memory saver for tests (Postgres deferred: Docker failed) ; 5.9 R&D-C harness. Then Phase 6.
+  OWNER NEXT: uv run python -m evals.runners.verify_eval  (paste the table; expect precision/kept to rise). Optional: real-model run 2.
+ SESSION-7 UPDATE:
+  PHASE 4 CLOSED (gate: results JSON produced, shipped variant decided + documented). Owner verified 118 tests, ruff clean, rag_eval, ablation,
+   verify_eval all ran (offline stand-ins). AI wrote docs/RD_B_results.md (hypotheses H1..H7 vs measured, caveats) and archived run 1 as
+   evals/results/rag_{eval,ablation}_standins_run1.json (docs cite these). config rag.variant=vbest; rag.best = decompose+hybrid+corrective
+   (rerank OFF: removing it improved every retrieval metric with the lexical stand-in). PROVISIONAL: re-decide after real-model run 2.
+   Honesty notes recorded in RD_B_results: 'unsupported after = 0' is by construction (not a result); retrieved-evidence verify precision 0.08-0.24
+   (title-only queries); V5 item recall is inflated by project bundles; HyDE template = skills query. `rag_eval.json`/`rag_ablation.json` will be
+   OVERWRITTEN by the next run (new best flags) - that is why run 1 is archived.
+  PHASE 4 OPEN ITEMS (owner-parallel, do not block Phase 5): run 2 with real models (set rag.embedder ollama nomic-embed-text; optional `uv sync --extra ml`
+   + rag.reranker cross_encoder) -> `make rag-eval rag-ablation` then copy results as *_real_run2.json; judge calibration L1 (30 labels, kappa);
+   --llm run for HyDE/decompose; pgvector backend (Phase 6).
+  PHASE 5 (LangGraph agents) PLAN, in order. 5.1 DONE-UNRUN: agent/state.py (starter keys kept + reducers for errors/steps/usage/events + needs_attention,
+   dead_letter, approval, revision...), agent/llm.py (LLMRouter: node->primary+fallback from config, async, ChatResult w/ tokens/latency/prompt_sha/fallback_used,
+   complete_json with one repair + StructuredOutputError, ScriptedBackend for tests), agent/security/quarantine.py (quote_untrusted), tests/unit/test_agent_llm.py (~10).
+   5.2 NEXT: prompts agent/prompts/<node>.md (analyst, risk, fit, pricing, writer, critic, compliance(rules only?), liaison) + nodes in agent/nodes/*.py
+   (starter stubs exist; keep file names). Deterministic parts first (risk rules via agent/policy/engine.py, pricing band from price_stats, fit via rag.registry,
+   verifier via rag.verify), LLM only where judgement is needed (analyst JobSpec, writer, critic, liaison). Every node returns events+usage+steps.
+   5.3 bid_graph.py (hand-written StateGraph, Send fan-out analyst/risk/fit, decision routing, pricing, writer, verifier, critic<=2 loops, compliance, interrupt()).
+   5.4 conversation_graph.py. 5.5 memory (promotion_rules.py starter file kept). 5.6 Postgres checkpointer (needs Docker/Postgres: owner Docker install FAILED earlier;
+   use InMemory/SQLite saver for tests and defer Postgres demo). 5.7 budgets/dead-letter. 5.8 injection detector. 5.9 R&D-C.
+  OWNER NEXT: uv run ruff check . --fix ; uv run pytest -q   (expect 118 + ~10 = ~128). Paste failures. Parallel/optional: run 2 real-model eval (above).
+ SESSION-6b UPDATE: owner ran gate: ruff clean, 116 passed, rag_smoke + ablation OK (offline stand-ins). verify_eval crashed
+  (ctx.source -> ctx.corpus.source): FIXED. Gaps (b),(d) below now CLOSED: rag/requirements.extract_requirements_llm (llm=True only, falls back
+  to deterministic) and verify._nums treats '38 percent' == '38%'; +2 tests (expect 118). Smoke tables are 20 jobs/persona, offline hashing+lexical:
+  NOT final numbers; do not quote. Observed (smoke only): vbest/-rerank similar, so lexical reranker adds little; real run decides.
+  OWNER NEXT: uv run pytest -q (expect 118) ; uv run python -m evals.runners.verify_eval ; then full rag_eval + ablation (no --limit), paste tables.
+ SESSION-6 UPDATE = PHASE 4 RAG, CODE COMPLETE.
+  Owner verified: 83 passed, ruff clean, `import rag.variants.pipeline, rag.ingest.loaders` OK, ollama nomic-embed-text pulled.
+  Reviewed by reading all files (session 6): everything below exists and is consistent with PLAN section 3 phase 4.
+  FILES: rag/{types,corpus,index,embeddings,requirements,llm,registry,verify}.py ; rag/ingest/loaders.py (catalogued + scanned layouts,
+   never reads gold_skills) ; rag/variants/{pipeline (composable Flags), v0..v8 presets} ; agent/prompts/rag_{hyde,context,decompose,grade,verify}.md ;
+   evals/runners/{rag_eval,ablation,verify_eval}.py ; docs/RD_B_hypothesis.md (written BEFORE any run) ; tests/unit/test_rag.py ;
+   config.yaml `rag:` block (variant, k, embedder, reranker, params, best, personas_dir) ; Makefile targets rag-smoke/rag-eval/rag-ablation/rag-verify (+`eval` = all three)
+   ; docs/ARCHITECTURE.md (RAG section), DATA_CARD section 6, rag/*/README.md.
+  DESIGN: variants = flag presets over ONE pipeline; ablation = leave-one-out of `rag.best` (default decompose+hybrid+rerank+corrective); vbest = best flags.
+   Metrics: recall@5, project_recall@5 (diversity-aware), mrr, ndcg@10, abstain_unfit/fit, latency p50/p95. Verify eval: oracle vs retrieved evidence, before/after.
+   Offline stand-ins (hashing embedder, lexical reranker) are the config default and are LABELLED in every results file; never call them semantic.
+  KNOWN GAPS: (a) test_rag.py never run by owner yet (expect ~40 new tests; some may need fixes). (b) optional LLM requirement extractor not implemented (deterministic only).
+   (c) pgvector backend not written (Phase 6; same dense/bm25/rank interface). (d) "38%" vs "38 percent" number forms could cause false 'unsupported' in verify;
+   check verify_eval precision. (e) judge calibration (kappa) needs owner labels L1. (f) `make eval` no longer calls run_demo_eval.py (starter placeholder, still present).
+  OWNER NEXT (PowerShell, D:\gigbid; paste output of any failure):
+   1. uv run ruff check . --fix ; uv run pytest -q          (expect 83 + new test_rag tests)
+   2. uv run python -m evals.runners.rag_eval --limit 20 --stem rag_smoke       (smoke, offline stand-ins; ~1 min)
+   3. make rag-eval  OR  uv run python -m evals.runners.rag_eval ; uv run python -m evals.runners.ablation ; uv run python -m evals.runners.verify_eval
+   4. Real-model run: set in agent/config.yaml rag.embedder {kind: ollama, model: nomic-embed-text, dim: 768} (Ollama running); optional
+      `uv sync --extra ml` then rag.reranker {kind: cross_encoder}. Re-run step 3 with --stem rag_eval_real for a second table. Paste the tables.
+  NEXT (AI) after the owner's results: read evals/results/*.json, write the honest findings into docs/RD_B_results.md (hypotheses H1-H7 confirmed/rejected),
+   set config rag.best + rag.variant from measurement, then Phase 5 (LangGraph agents) which calls rag.registry.build_retriever + rag.verify.verify_and_repair.
+   3.5 (GitHub MCP ingestion, upwork_live.py) stays blocked on T5.
+ SESSION-4 UPDATE (latest): owner gate for Phase 2 PASSED (ruff clean, 43 passed, gigsim_local /docs 200). PHASE 2 DONE.
+ 3.1 VERIFIED by owner (portfolio server starts on :9101; MCP in-memory wiring test PASSED => mcp 1.x API ok). One bug found+fixed:
+   evidence rows can have project=null (cv etc): store.py now uses `.get("project") or ""`. Re-run pytest to confirm 53/53.
+ 3.2 Marketplace MCP server WRITTEN (not yet run): agent/approvals.py (HMAC token bound to action+subject+expiry; message token bound to
+   sha256 of exact text), mcp_servers/marketplace/{guard.py (RateLimiter, hash-chained AuditLog, BearerAuthMiddleware), server.py},
+   tests/unit/test_marketplace_server.py (~11 tests). config.yaml marketplace.{mcp_reads_per_minute,mcp_writes_per_minute,audit_log}; .gitignore data/audit/.
+   Tools: 7 reads + create_proposal_draft + submit_proposal(dry_run, approval_token) + send_message(approval_token). Errors = `Code: msg (retryable=..)`.
+   Run: MCP_BEARER_TOKEN=... python -m mcp_servers.marketplace.server (:9102/mcp, /healthz). API (Phase 6) must call agent.approvals.issue() on human approve.
+ PHASE 3.1 code WRITTEN (not yet run by owner): mcp_servers/portfolio/{store.py,server.py}, tests/unit/test_portfolio_server.py.
+   store.py = pure BM25 read model (no mcp import); gold_skills + fabrication labels never exposed (leak test). Tools: search_evidence,
+   get_case_study, list_skills, get_profile (all readOnly); resources portfolio://case|proposal|profile; prompts ground_claim, summarize_fit.
+   Run: python -m mcp_servers.portfolio.server (HTTP :9101/mcp) or MCP_TRANSPORT=stdio. Sandbox has mcp 2.x (project pins 1.x) so MCP wiring
+   test is UNVERIFIED: if test_mcp_tools_listed... fails, paste the error.
+ 3.1+3.2 VERIFIED by owner: ruff clean, 63 passed (43 + 20). Marketplace /mcp in browser returns 401 JSON = bearer auth working (expected).
+ 3.3 Workspace MCP server WRITTEN (not yet run): mcp_servers/workspace/{store.py (local MOCK calendar+drafts, JSON state, idempotent),
+   server.py (:9103; get_free_slots, list_holds, hold_slot, release_hold, draft_email, list_email_drafts; NO send/confirm tool by design)},
+   tests/unit/test_workspace_server.py (~13), config.yaml `workspace:` section, .gitignore data/workspace/.
+ 3.4 agent/mcp_client.py WRITTEN (not yet run): McpGateway (allowlists from config `mcp.allowlists`, timeout, retries w/ Retry-After,
+   circuit breaker + health() for UI banner), InMemoryTransport, HttpTransport (langchain-mcp-adapters MultiServerMCPClient; UNTESTED live),
+   tests/unit/test_mcp_client.py (~9; includes policy test: no LLM node can reach submit/send/draft tools). scripts/mcp_smoke.py = live check.
+   Servers' main() now load .env (MCP_BEARER_TOKEN). docs/TOOLS.md written (full inventory + allowlist table).
+ OWNER NEXT: uv run ruff check . --fix ; uv run pytest -q   (expect ~94). Then optional live smoke (4 terminals, in D:\gigbid):
+   (1) $env:GIGSIM_DATASET="sample"; $env:GIGSIM_FAULT_RATE="0"; uv run python -m gigsim_local
+   (2) uv run python -m mcp_servers.portfolio.server   (3) uv run python -m mcp_servers.marketplace.server   (4) uv run python -m mcp_servers.workspace.server
+   then a 5th: uv run python -m scripts.mcp_smoke   (expect 5 x OK). If marketplace says token unset: put MCP_BEARER_TOKEN=devtoken in .env.
+ NEXT (AI): 3.5 GitHub MCP ingestion client + live Upwork adapter (upwork_live.py) -- needs owner T5 (Upwork MCP/OAuth) result; if blocked, skip to
+   Phase 4 (Advanced RAG: ingestion, pgvector/in-memory index, variants V0..V8, verify.py, evals). 3.7 R&D-A tool-granularity experiment needs agents (after Phase 5).
  SESSION-3 UPDATE (latest): owner verified Phase 1.4 (ruff clean, 21 passed, build_jobs: 3 x 200 dev [120 bid/80 skip], 1500 stream, 2025 clients). PHASE 1 DONE.
  PHASE 2 code written (sandbox: 22 tests pass, ruff clean; NOT yet run on owner machine):
    gigsim_local/{__init__,__main__,config,policy_update(.py/.yaml),sample_data,client_model,world,app,README}

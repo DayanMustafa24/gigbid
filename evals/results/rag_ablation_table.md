@@ -1,0 +1,9 @@
+<!-- ai_ml: hashing-512 / lexical-coverage; fullstack_web: hashing-512 / lexical-coverage; data_analyst: hashing-512 / lexical-coverage -->
+| variant | recall@5 | project_recall@5 | mrr | ndcg@10 | abstain_unfit | abstain_fit | latency_ms_p95 |
+|---|---|---|---|---|---|---|---|
+| v0_naive | 0.4441 | 0.4576 | 0.9542 | 0.4655 | 0.0 | 0.0 | 0.71 |
+| full | 0.6588 | 0.692 | 0.983 | 0.6144 | 1.0 | 0.0 | 3.94 |
+| -decompose | 0.6344 | 0.6003 | 0.9697 | 0.6115 | 1.0 | 0.0 | 3.32 |
+| -hybrid | 0.6573 | 0.6888 | 0.9801 | 0.6143 | 1.0 | 0.0 | 3.04 |
+| -rerank | 0.6987 | 0.7381 | 0.9744 | 0.6354 | 1.0 | 0.0 | 1.44 |
+| -corrective | 0.6455 | 0.6943 | 0.9801 | 0.605 | 0.0 | 0.0 | 3.18 |

@@ -14,6 +14,18 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = Path(os.environ.get("GIGBID_CONFIG", ROOT / "agent" / "config.yaml"))
 
 
+def load_env(path: Path | str | None = None) -> bool:
+    """Export `.env` into os.environ WITHOUT overriding real environment variables.
+
+    pydantic-settings reads .env into `Settings` fields only; provider keys (GROQ_API_KEY, MCP_BEARER_TOKEN, ...) are resolved from
+    os.environ by node_model()/default_llm()/prompt guard, so without this call they are invisible and /health/ready reports
+    models + injection_classifier as unavailable. Called by the API container and the worker at startup (not at import: tests stay hermetic).
+    """
+    from dotenv import load_dotenv
+
+    return bool(load_dotenv(path or ROOT / ".env", override=False))
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ROOT / ".env", extra="ignore")
 
@@ -26,6 +38,15 @@ class Settings(BaseSettings):
     gigsim_base_url: str = "http://localhost:8081"
     gigsim_api_token: str = ""
     model_profile: str | None = None
+    # ---- API (Phase 6) ----
+    app_database_url: str = "sqlite+aiosqlite:///data/app/gigbid.sqlite"  # users/runs/events; postgresql+asyncpg://... in production
+    reviewer_email: str = ""  # a login seeded at startup (deployment: the reviewer account); empty = none
+    reviewer_password: str = ""
+    session_ttl_minutes: int = 480
+    cookie_secure: bool = False  # True behind HTTPS (deployment)
+    allow_registration: bool = False  # the first account can always register; later ones only when this is true
+    cors_origins: str = "http://localhost:3000"  # comma-separated; empty in production (same-origin proxy)
+    api_runs_per_minute: int = 30  # per user: starting/deciding runs
 
 
 class NodeModel(BaseModel):

@@ -1,0 +1,24 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	load_context(load_context)
+	client_liaison(client_liaison)
+	message_gate(message_gate)
+	message_sender(message_sender)
+	conv_dead_letter(conv_dead_letter)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> load_context;
+	client_liaison -.-> conv_dead_letter;
+	client_liaison -.-> message_gate;
+	load_context --> client_liaison;
+	message_gate -.-> __end__;
+	message_gate -.-> message_sender;
+	conv_dead_letter --> __end__;
+	message_sender --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

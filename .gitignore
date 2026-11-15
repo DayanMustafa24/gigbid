@@ -17,3 +17,9 @@ data/external/
 # never commit: hidden test set, live-mode client data, tokens
 evals/hidden/
 data/live/
+data/audit/
+data/workspace/
+data/memory/
+data/checkpoints/
+# the owner's own uploaded portfolio (private)
+data/user/

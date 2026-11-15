@@ -55,3 +55,15 @@ live in `data/synthetic/` and `gigsim_local/`; the instructor's files drop into 
 - Job stream: 1,500 jobs (500 per persona, different seed, no labels) with gold in a sidecar `job_stream_gold.jsonl`.
 - Limitations: templated text; scam/injection phrasing is a fixed catalogue of 5 + 4 patterns, so detectors tuned on it
   will overestimate real-world recall. Real-world robustness must be argued separately (failure analysis).
+
+## 6. RAG evaluation use of this data (Phase 4)
+
+- Corpus per persona = case studies, READMEs, code files, CV bullets, reviews (citable) + 150 past proposals (signal only).
+  Ingestion never reads `gold_skills`; gold for retrieval = per-requirement evidence ids in the dev sets.
+- Claim verification eval uses the generator's per-claim labels (`supported_by`, ~8% proposals with a planted fabricated claim).
+- Gold lists every item of a matching project, so item-level Recall@5 alone favours returning five items of one project;
+  Project-Recall@5 is reported beside it.
+- Offline runs use a hashing embedder and lexical reranker (stand-ins, named in each results file). Real-model runs
+  (Ollama nomic-embed-text, bge-reranker-v2-m3) use the same command with config changed.
+- Limitations: gold and corpus come from the same generator (shared vocabulary), so absolute scores are optimistic;
+  compare variants, do not quote absolute numbers as real-world accuracy.

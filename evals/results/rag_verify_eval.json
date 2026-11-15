@@ -1,0 +1,92 @@
+{
+  "ai_ml": {
+    "oracle": {
+      "proposals": 150,
+      "unsupported_flagged_per_proposal_before": 0.3733,
+      "unsupported_flagged_per_proposal_after": 0.0,
+      "unsupported_rate_before": 0.1713,
+      "unsupported_rate_after": 0.0,
+      "fabricated_per_proposal_before": 0.0467,
+      "fabricated_per_proposal_after": 0.0,
+      "fabrication_precision": 1.0,
+      "fabrication_recall": 1.0,
+      "truthful_claims_kept": 1.0
+    },
+    "retrieved": {
+      "proposals": 150,
+      "unsupported_flagged_per_proposal_before": 0.5,
+      "unsupported_flagged_per_proposal_after": 0.0,
+      "unsupported_rate_before": 0.2294,
+      "unsupported_rate_after": 0.0,
+      "fabricated_per_proposal_before": 0.0467,
+      "fabricated_per_proposal_after": 0.0,
+      "fabrication_precision": 0.2333,
+      "fabrication_recall": 1.0,
+      "truthful_claims_kept": 0.9077
+    },
+    "setup": {
+      "embedder": "hashing-512",
+      "reranker": "lexical-coverage"
+    }
+  },
+  "fullstack_web": {
+    "oracle": {
+      "proposals": 150,
+      "unsupported_flagged_per_proposal_before": 0.4067,
+      "unsupported_flagged_per_proposal_after": 0.0,
+      "unsupported_rate_before": 0.2068,
+      "unsupported_rate_after": 0.0,
+      "fabricated_per_proposal_before": 0.04,
+      "fabricated_per_proposal_after": 0.0,
+      "fabrication_precision": 1.0,
+      "fabrication_recall": 1.0,
+      "truthful_claims_kept": 1.0
+    },
+    "retrieved": {
+      "proposals": 150,
+      "unsupported_flagged_per_proposal_before": 0.6733,
+      "unsupported_flagged_per_proposal_after": 0.0,
+      "unsupported_rate_before": 0.3424,
+      "unsupported_rate_after": 0.0,
+      "fabricated_per_proposal_before": 0.04,
+      "fabricated_per_proposal_after": 0.0,
+      "fabrication_precision": 0.1304,
+      "fabrication_recall": 1.0,
+      "truthful_claims_kept": 0.8291
+    },
+    "setup": {
+      "embedder": "hashing-512",
+      "reranker": "lexical-coverage"
+    }
+  },
+  "data_analyst": {
+    "oracle": {
+      "proposals": 150,
+      "unsupported_flagged_per_proposal_before": 0.4333,
+      "unsupported_flagged_per_proposal_after": 0.0,
+      "unsupported_rate_before": 0.2083,
+      "unsupported_rate_after": 0.0,
+      "fabricated_per_proposal_before": 0.0933,
+      "fabricated_per_proposal_after": 0.0,
+      "fabrication_precision": 1.0,
+      "fabrication_recall": 1.0,
+      "truthful_claims_kept": 1.0
+    },
+    "retrieved": {
+      "proposals": 150,
+      "unsupported_flagged_per_proposal_before": 0.5733,
+      "unsupported_flagged_per_proposal_after": 0.0,
+      "unsupported_rate_before": 0.2756,
+      "unsupported_rate_after": 0.0,
+      "fabricated_per_proposal_before": 0.0933,
+      "fabricated_per_proposal_after": 0.0,
+      "fabrication_precision": 0.4,
+      "fabrication_recall": 1.0,
+      "truthful_claims_kept": 0.915
+    },
+    "setup": {
+      "embedder": "hashing-512",
+      "reranker": "lexical-coverage"
+    }
+  }
+}

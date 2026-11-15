@@ -138,11 +138,12 @@ class GigSimAdapter:
         data = await self._request("POST", f"/v1/proposals/{proposal_id}/submit", params={"dry_run": "true"})
         return SubmissionPreview.model_validate(data)
 
-    async def submit_proposal(self, proposal_id: str, idempotency_key: str) -> SubmissionReceipt:
+    async def submit_proposal(self, proposal_id: str, idempotency_key: str, approval_token: str | None = None) -> SubmissionReceipt:
+        # approval_token is enforced by the Marketplace MCP server in front of this adapter; the simulator itself has no such concept
         data = await self._request("POST", f"/v1/proposals/{proposal_id}/submit", idempotency_key=idempotency_key)
         return SubmissionReceipt.model_validate(data)
 
-    async def send_message(self, proposal_id: str, text: str, idempotency_key: str) -> Message:
+    async def send_message(self, proposal_id: str, text: str, idempotency_key: str, approval_token: str | None = None) -> Message:
         data = await self._request("POST", "/v1/messages", json={"proposal_id": proposal_id, "text": text},
                                    idempotency_key=idempotency_key)
         return Message.model_validate(data)

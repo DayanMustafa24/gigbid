@@ -1,8 +1,50 @@
 # All tunables live here or in agent/policy/rules.yaml, never in code (change-request ready).
 marketplace:
   mode: gigsim                 # gigsim | upwork   (overridden by MARKETPLACE_MODE env)
+  access: mcp                  # mcp | direct   how the API/worker/graph reach it (MARKETPLACE_ACCESS env). mcp = through the Marketplace MCP server
+                               #   (allowlists, approval tokens, audit log: the product path). direct = in-process adapter, local experiments only.
   max_requests_per_minute: 20
   live_scout_interval_minutes: 240   # conservative for live mode; justify in docs/RUNBOOK.md
+  mcp_reads_per_minute: 120          # Marketplace MCP server, per caller
+  mcp_writes_per_minute: 10          # drafts / submits / messages, per caller
+  audit_log: data/audit/marketplace_audit.jsonl   # append-only, hash-chained (git-ignored)
+
+workspace:                     # local MOCK calendar/mailbox for the Workspace MCP server (documented in docs/TOOLS.md)
+  utc_offset_hours: 5          # owner's local time (Asia/Karachi); all slot times are ISO-8601 with this offset
+  work_start: "09:00"
+  work_end: "17:00"
+  workdays: [0, 1, 2, 3, 4]    # Mon=0
+  granularity_min: 30
+  buffer_min: 15               # gap kept around tentative holds
+  min_notice_hours: 2
+  max_range_days: 14
+  state_file: data/workspace/state.json
+  recurring_busy:              # stand-in for a real calendar; replaced by Google Calendar adapter later
+    - {title: Lunch, days: [0, 1, 2, 3, 4], start: "13:00", end: "14:00"}
+    - {title: Weekly planning, days: [0], start: "09:00", end: "10:00"}
+
+mcp:                           # agent-side gateway (agent/mcp_client.py). Tool access is DATA: edit here, not in code.
+  timeout_s: 15
+  max_retries: 2               # for retryable tool errors and transport failures (writes reuse their idempotency key)
+  backoff_base_s: 0.25
+  max_retry_wait_s: 10
+  cooldown_s: 30               # after a server is declared down, fail fast for this long, then probe again
+  servers:
+    portfolio:   {url_env: MCP_PORTFOLIO_URL,   default_url: "http://localhost:9101/mcp"}
+    marketplace: {url_env: MCP_MARKETPLACE_URL, default_url: "http://localhost:9102/mcp"}
+    workspace:   {url_env: MCP_WORKSPACE_URL,   default_url: "http://localhost:9103/mcp"}
+  allowlists:                  # node -> server -> tools. Missing node/server/tool = denied (least privilege)
+    scout:          {marketplace: [search_jobs, get_job]}
+    analyst:        {}                       # tool-less by design: it reads untrusted job text (injection defence)
+    risk_assessor:  {marketplace: [get_client_history, get_platform_policy]}
+    fit_matcher:    {portfolio: [search_evidence, get_case_study, list_skills, get_profile]}
+    pricing:        {portfolio: [get_profile], marketplace: [get_platform_policy, get_connects_balance]}
+    writer:         {portfolio: [search_evidence, get_case_study]}
+    verifier:       {portfolio: [search_evidence, get_case_study]}
+    critic:         {}
+    compliance:     {marketplace: [get_platform_policy, get_connects_balance]}
+    client_liaison: {marketplace: [get_proposal, list_messages], workspace: [get_free_slots, hold_slot, release_hold, draft_email, list_holds, list_email_drafts]}
+    executor:       {marketplace: [create_proposal_draft, submit_proposal, send_message, get_proposal]}   # deterministic, runs only AFTER human approval; not an LLM node
 
 models:
   profile: open                # open | paid        (overridden by MODEL_PROFILE env)
@@ -28,6 +70,9 @@ models:
         writer:         {provider: groq, model: "openai/gpt-oss-120b", fallback: "groq/openai/gpt-oss-20b"}
         critic:         {provider: groq, model: "openai/gpt-oss-120b", fallback: "groq/openai/gpt-oss-20b"}
         client_liaison: {provider: groq, model: "openai/gpt-oss-120b", fallback: "groq/openai/gpt-oss-20b"}
+        # R&D-C baselines (evals only): same strong model as the product writer so the comparison isolates ORCHESTRATION, not model quality
+        rdc_single:     {provider: groq, model: "openai/gpt-oss-120b", fallback: "groq/openai/gpt-oss-20b"}
+        rdc_supervisor: {provider: groq, model: "openai/gpt-oss-120b", fallback: "groq/openai/gpt-oss-20b"}
     paid:
       providers:
         openai: {base_url: "https://api.openai.com/v1", api_key_env: OPENAI_API_KEY}
@@ -38,6 +83,8 @@ models:
 
 security:
   # second-layer injection classifiers (open-weight, on Groq); regex rules in policy/rules.yaml are layer one
+  # injection: thresholds for agent/security/detector.py heuristics (+ optional classifier hook Deps.injection_classifier; wiring to the model below is TODO)
+  injection: {high: 0.6, medium: 0.3, classifier_flag: 0.5}
   injection_classifier: {provider: groq, model: "meta-llama/llama-prompt-guard-2-86m"}
   safety_model:         {provider: groq, model: "openai/gpt-oss-safeguard-20b"}
 
@@ -56,13 +103,81 @@ thresholds:
   maximum_risk_score: 0.70
   autoskip_fit_below: 0.30     # only used when user autonomy allows auto-skip; never auto-send
 
+risk:                          # Risk Assessor + decision rules as DATA (assignment: rules live in config, not code)
+  weights:                     # added up and capped at 1.0 -> RiskReport.score
+    unpaid_work: 0.9
+    scam_pattern: 0.9
+    off_platform_payment: 0.8
+    off_platform_contact: 0.7
+    prompt_injection: 0.15     # a planted instruction is ignored, not a reason to skip
+    low_budget: 0.8
+    unverified_payment: 0.2
+    poor_client_history: 0.25
+    duplicate: 0.9
+  skip_flags: [unpaid_work, scam_pattern, off_platform_payment, off_platform_contact, low_budget, duplicate]
+  duplicate_similarity: 0.7    # token Jaccard of descriptions vs an already-seen job
+  low_budget_hourly_factor: 0.85   # hourly budget max below rate x factor = low budget
+  client: {min_rating: 3.5, young_account_days: 30}
+
+pricing:
+  connect_price_usd: 0.15      # Upwork sells Connects at $0.15 each
+  base_reply_rate: 0.30        # ASSUMPTION used until outcome memory has data; replace with measured reply rate (Phase 9)
+  hourly_floor_factor: 0.85
+  fixed_scale_min: 0.6
+  fixed_target_of_max: 0.9     # fixed-price bid = this share of the client's max budget (clamped into [min, max])
+  win_given_reply: 0.25        # ASSUMPTION until outcome memory has data (Phase 5.5/9)
+  hourly_value_hours: 20       # assumed engagement length when valuing an hourly job
+  persona_domain: {ai_ml: ai_ml, fullstack_web: fullstack_web, data_analyst: data_analyst}   # persona id -> price_stats.by_persona_domain key
+
+critic:
+  min_grounding: 0.8           # share of factual claims that are supported after verification
+  min_personalisation: 0.5     # share of the job's must-have terms the letter addresses
+  max_generic_ratio: 0.5       # share of 'puffery' sentences tolerated
+
+checkpointer:                   # durable graph state (agent/checkpointing.py). CHECKPOINTER env overrides `kind`.
+  kind: sqlite                 # memory | sqlite | postgres   (compose/production sets CHECKPOINTER=postgres)
+  sqlite_path: data/checkpoints/graph.sqlite   # git-ignored
+
+memory:                        # long-term memory (R7): promotion rules are DATA, see agent/memory/promotion_rules.py
+  db_path: data/memory/memory.sqlite   # git-ignored; one file, WAL; owner-scoped, viewable + deletable
+  style:                       # learned ONLY from the freelancer's own edits / approvals of drafts
+    min_edits: 3               # distinct proposals that show the pattern
+    min_consistency: 0.7       # share of the last `window` proposals (where the pattern was testable) that show it
+    window: 8
+    shorter_ratio: 0.8         # edited length <= original x ratio counts as 'shorter'
+    longer_ratio: 1.25
+    max_rules: 8
+    max_phrase_chars: 90
+    min_sentence_chars: 25
+    match_jaccard: 0.6         # a sentence counts as kept if a similar one survives the edit
+  outcome:                     # replaces the ASSUMED pricing rates with measured ones, shrunk toward the assumption
+    min_samples: 20            # real outcomes before a measured reply rate is used
+    min_replies: 10            # replies before a measured win-given-reply is used
+    prior_strength: 10         # pseudo-observations carried by the assumption
+
+strategies:                    # X2 proposal experiments: opener strategies, assigned by hash(job_id) (Phase 9)
+  evidence-first: "Open with one concrete, evidence-backed result from a similar project."
+  question-first: "Open with one sharp clarifying question about the client's goal, then one evidence-backed result."
+
 ci_gates:                      # used by .github/workflows/eval.yml
   max_unsupported_claims_per_proposal: 0.5
   min_bid_skip_f1: 0.70
 
 rag:
-  variant: v0_naive            # chosen by measurement; see docs/DATA_CARD.md + evals/results
+  variant: vbest               # what SHIPS = `best` below (provisional, stand-in measurements; see docs/RD_B_results.md)
   k: 5
+  embedder: {kind: hashing, dim: 512}          # offline floor. Real run: {kind: ollama, model: nomic-embed-text, dim: 768}
+  reranker: {kind: lexical}                     # offline stand-in. Real run: {kind: cross_encoder, model: BAAI/bge-reranker-v2-m3}
+  params: {candidates: 30, rrf_k: 60, chunk_chars: 500, chunk_overlap: 80, outcome_beta: 0.25, max_requery: 1, abstain: true}
+  best: {decompose: true, hybrid: true, rerank: false, corrective: true}   # provisional: -rerank beat full in stand-in ablation; re-decide after real-model run
+  personas_dir: data/synthetic/personas
+
+worker:                        # Arq worker (worker/main.py): scheduled, idempotent background work. Nothing here sends anything.
+  scout_every_minutes: 240     # conservative for live mode (polite rate limits, R9); GigSim can go faster
+  sync_every_minutes: 60       # pull proposal statuses into outcome memory
+  recover_every_minutes: 15    # mark runs of a crashed process failed so `retry` can resume them
+  max_runs_per_scout: 5        # new bid runs started per user per scouting pass (each costs model calls)
+  scout_limit_per_query: 10
 
 policy_file: agent/policy/rules.yaml
 prompts_dir: agent/prompts

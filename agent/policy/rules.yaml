@@ -10,9 +10,10 @@ policy_version: "starter-2026-11-14"
 rules:
   - id: P1-off-platform-contact
     description: No off-platform contact or payment requests.
-    applies_to: [draft, job_post]
+    applies_to: [draft, job_post, client_message]
     type: regex
     action: redact
+    flag: off_platform_contact
     patterns:
       - '[\w.+-]+@[\w-]+\.[\w.-]+'
       - '(?:\+?\d[\s().-]?){9,}\d'
@@ -23,6 +24,7 @@ rules:
     applies_to: [job_post]
     type: regex
     action: block
+    flag: unpaid_work
     patterns:
       - '\b(?:free|unpaid)\s+(?:trial|test|sample|work|task)\b'
       - 'for free as a test'
@@ -40,12 +42,52 @@ rules:
     applies_to: [job_post, client_message]
     type: regex
     action: warn
+    flag: prompt_injection
     patterns:
       - 'ignore (?:all |any )?(?:previous|prior|above) (?:instructions|rules)'
       - '(?:disregard|forget) (?:your|the) (?:system|instructions|rules)'
       - 'you are now\b'
       - 'system prompt'
       - '\bact as\b.{0,40}\b(?:admin|developer|unrestricted)\b'
+  - id: P7-pay-to-work
+    description: Client asks the freelancer to pay before working (packages, fees, gift cards).
+    applies_to: [job_post]
+    type: regex
+    action: block
+    flag: scam_pattern
+    patterns:
+      - '\bbuy our\b'
+      - '\bgift card\b'
+      - '\b(?:registration|training|activation|starter) (?:fee|package|kit)\b'
+  - id: P8-credential-request
+    description: Client asks for identity documents or banking credentials.
+    applies_to: [job_post]
+    type: regex
+    action: block
+    flag: scam_pattern
+    patterns:
+      - 'photo of your (?:id|passport)'
+      - '\bbank (?:login|details|account|password)\b'
+      - '\bsend .{0,30}(?:passport|id card)\b'
+  - id: P9-too-good-to-be-true
+    description: Guaranteed earnings, no-experience offers and risk-free promises.
+    applies_to: [job_post]
+    type: regex
+    action: block
+    flag: scam_pattern
+    patterns:
+      - '\bguarantee[sd]? \$'
+      - '\bno experience needed\b'
+      - '\brisk[- ]free\b'
+  - id: P10-off-platform-payment
+    description: Payment or work arranged outside the platform.
+    applies_to: [job_post]
+    type: regex
+    action: block
+    flag: off_platform_payment
+    patterns:
+      - 'outside (?:of )?(?:the )?platform'
+      - 'avoid (?:the )?(?:platform )?fees'
   - id: P5-fabrication
     description: No claim may exceed portfolio evidence (enforced by claim verification, not regex).
     applies_to: [draft]
